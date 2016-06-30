@@ -1,0 +1,293 @@
+#########################################
+## TNZ analysis
+# Project ranges in current and future climates
+# Estimaates ranges based on physiological limits
+# Don't consider west / east range boundaries, use observed limits?
+#
+#BIRDS
+#########################################
+
+library(dismo)
+library(raster)
+
+mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
+
+#USE WORLD CLIM PROJECTIONS
+#5 Minutes
+# BIO6 = Min Temperature of Coldest Month
+# 2100 RCP6
+
+#current data
+clim.p= getData('worldclim', var='bio', res=5)
+clim.pmax= clim.p$bio5/10
+clim.pmin= clim.p$bio6/10
+
+#future data
+clim.f=getData('CMIP5', var='bio', res=5, rcp=60, model='BC', year=70)
+clim.fmax= clim.f$bc60bi705/10
+clim.fmin= clim.f$bc60bi706/10
+#'model' should be one of "AC", "BC", "CC", "CE", "CN", "GF", "GD", "GS", "HD", "HG", "HE", "IN", "IP", "MI", "MR", "MC", "MP", "MG", or "NO".
+#'rcp' should be one of 26, 45, 60, or 85.
+#'year' should be 50 or 70
+
+plot(clim.fmax-clim.pmax)
+#-----------------------------------------
+#Load physiological data
+#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
+#phy=read.csv("MRelevation_wTraits.csv")
+#phy=na.omit(phy[,1:30])
+
+#Read physiology data
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+phy=read.csv("MRelevation_all.csv")
+#phy=na.omit(phy[,c(5:32,53:54)])
+
+#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
+#phy=read.csv("MRelevation_wTraits.csv")
+#phy=na.omit(phy[,1:30])
+
+#Read physiology data
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+phy=read.csv("MRelevation_all.csv")
+phy= as.data.frame(phy)
+#phy=na.omit(phy[,c(5:32,53:54)])
+
+#Use synonyms to match up
+phy$Spec.syn= as.character(phy$Species)
+phy$Spec.syn[which(phy$Spec.syn=="Anas rhynchotis")]="Spatula rhynchotis"
+phy$Spec.syn[which(phy$Spec.syn=="Collocalia vanikorensis")]="Aerodramus vanikorensis"
+phy$Spec.syn[which(phy$Spec.syn=="Aceros plicatus")]="Rhyticeros plicatus"
+phy$Spec.syn[which(phy$Spec.syn=="Coturnix chinensis")]="Synoicus chinensis"
+phy$Spec.syn[which(phy$Spec.syn=="Aramides cajanea")]="Aramides cajaneus"
+phy$Spec.syn[which(phy$Spec.syn=="Gallinula mortierii")]="Tribonyx mortierii"
+phy$Spec.syn[which(phy$Spec.syn=="Gallinula ventralis")]="Tribonyx ventralis"
+phy$Spec.syn[which(phy$Spec.syn=="Gallirallus owstoni")]="Hypotaenidia owstoni"
+phy$Spec.syn[which(phy$Spec.syn=="Porzana cinerea")]="Amaurornis cinerea"
+phy$Spec.syn[which(phy$Spec.syn=="Cacatua roseicapilla")]="Eolophus roseicapilla"
+phy$Spec.syn[which(phy$Spec.syn=="Otus leucotis")]="Ptilopsis leucotis"
+
+
+#Add Tmin Tmix data
+TminTmax= read.csv("BirdTminTmax.csv")
+
+#Match species
+speciesnames= as.character(TminTmax$species)
+speciesnames.match<- substr(speciesnames, 1, nchar(speciesnames)-9)
+speciesnames.match<- gsub("_", " ", speciesnames.match)
+
+match1= match(as.character(phy$Spec.syn), speciesnames.match)
+matched= which(!is.na(match1))
+not.matched= which(is.na(match1))
+
+phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA;  phy$Tsd.min= NA; phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA;   phy$Tsd.max= NA;
+
+phy$Tmin[matched]= TminTmax$Tmin[match1[matched]] 
+phy$Tmedian.min[matched]= TminTmax$Tmedian.min[match1[matched]] 
+phy$T5q.min[matched]= TminTmax$T5q.min[match1[matched]] 
+phy$T10q.min[matched]= TminTmax$T10q.min[match1[matched]]  
+phy$Tsd.min[matched]= TminTmax$Tsd.min[match1[matched]] 
+phy$Tmax[matched]= TminTmax$Tmax[match1[matched]] 
+phy$Tmedian.max[matched]= TminTmax$Tmedian.max[match1[matched]] 
+phy$T5q.max[matched]= TminTmax$T5q.max[match1[matched]] 
+phy$T10q.max[matched]= TminTmax$T10q.max[match1[matched]]   
+phy$Tsd.max[matched]= TminTmax$Tsd.max[match1[matched]]
+
+#Limit to species with shapefiles
+phy= phy[matched,]
+
+#Calculate ambient prediction
+#Calculate MR elevation
+Tmin= phy$T10q.min
+Tmax= phy$T10q.max
+
+phy$CMIN_mlO2_hC= as.numeric(as.character(phy$CMIN_mlO2_hC))
+phy$Tlc= as.numeric(as.character(phy$Tlc))
+  
+NBMR= abs(Tmax- Tmin)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
+phy$scopeW= NBMR / phy$BMR_mlO2_h
+
+NBMR= abs(Tmax - Tmax)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
+phy$scope.hotW= NBMR / phy$BMR_mlO2_h
+
+phy$Tamb_lowSS= phy$Tlc-(phy$scopeW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
+phy$Tamb_upSS= phy$Tuc+(phy$scope.hotW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
+
+#-----------------------------------------
+#Estimate range limits in current and future environments
+
+rlim= matrix(NA, nrow=nrow(phy), ncol=9) #ymin past, ymax past, ymin future, ymax future, area past, area future
+
+#plot range maps
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+pdf("BirdRangePred.pdf", height = 6, width = 10)
+
+par(mfrow=c(4,4), cex=1.2, mar=c(3, 3, 0.5, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", tck=0.02, mgp=c(1, 0, 0))
+
+#change directory back for shapefiles
+setwd(paste(mydir,"Data\\Shapefiles\\Birds\\", sep=""))
+
+#LOOP SPECIES
+for(spec in 1:nrow(phy) ){
+
+  #LOAD SHAPEFILE AND EXTRACT EXT
+  shape= shapefile(paste(phy[spec,"shapename"],".shp",sep=""))  
+  extent2= extent(shape)
+  
+for(clim in 1:2){ #present, future  
+
+  if(clim==1) clim.pmin1= clim.pmin; clim.pmax1= clim.pmax
+  if(clim==2) clim.pmin1= clim.fmin; clim.pmax1= clim.fmax
+    
+## CURRENT CLIMATE
+#Subset to above Tmin and below Tmax
+clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
+clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
+clim.spec= clim.pmin1 + clim.pmax1
+clim.spec= trim(clim.spec)
+
+#crop to lon extent
+ext.spec= extent(clim.spec)
+ext= extent(t(matrix(c( sort(c(extent2@xmin, extent2@xmax), decreasing=FALSE), ext.spec@ymin, ext.spec@ymax), nrow=2)))
+#account for no longitudinal range
+if(ext@xmin==ext@xmax) ext@xmin=ext@xmin-1; ext@xmax=ext@xmax+1
+clim.spec.crop=crop(clim.spec, ext)
+
+if(cellStats(clim.spec.crop,sum, ra.rm=TRUE)==0) break()
+  
+clim.spec.crop= trim(clim.spec.crop)
+
+#-----------------------------
+## find clumps overlapping initial distribution
+##find clumps
+sc= clump(clim.spec.crop, directions=4)
+
+clump_id <- getValues(sc) 
+xy <- xyFromCell(sc,1:ncell(sc))
+df <- data.frame(xy, clump_id, is_clump = sc[] %in% freq(sc, useNA = 'no')[,1])
+df= df[df$is_clump == T, ]
+
+clumps= unique(df[df$y<extent2@ymax & df$y>extent2@ymin,"clump_id"])
+rclump= df[df$"clump_id" %in% clumps, ]
+
+clim.spec.crop[!sc %in% clumps] <- NA
+#-----------------------------
+
+# calculate frequency of each clump/patch
+sc.freq <- as.data.frame(freq(sc))
+sc.freq<- sc.freq[!is.na(sc.freq$value),]
+
+# store clump ID's with small size
+#rmID <- sc.freq$value[which(sc.freq$count <100)]
+#restrict to biggest clump
+rmID <- sc.freq$value[which.max(sc.freq$count)]
+clim.spec.crop[!sc %in% rmID] <- NA
+clim.spec.crop[sc %in% rmID] <- 1 
+
+#Cut off tails, need to account for Central America, etc
+rsum= rowSums(as.matrix(clim.spec.crop), na.rm=TRUE) 
+clim.spec.crop[ which(rsum< (max(rsum)/10)), ]<- NA #cut off tails<10% row sums
+
+#-----------------------------
+#restrict to biggest clump again
+##find clumps
+sc= clump(clim.spec.crop, directions=4)
+
+# calculate frequency of each clump/patch
+sc.freq <- as.data.frame(freq(sc))
+sc.freq<- sc.freq[!is.na(sc.freq$value),]
+
+# store clump ID's with small size
+#rmID <- sc.freq$value[which(sc.freq$count <100)]
+#restrict to biggest clump
+rmID <- sc.freq$value[which.max(sc.freq$count)]
+clim.spec.crop[!sc %in% rmID] <- NA
+clim.spec.crop[sc %in% rmID] <- 1 
+clim.spec.crop= trim(clim.spec.crop)
+
+if(clim==1) range.p= clim.spec.crop
+if(clim==2) range.f= clim.spec.crop
+
+#find range
+if(clim==1 & nrow(rclump)>0) rlim[spec,1:2]= range(rclump$y)
+if(clim==2 & nrow(rclump)>0) rlim[spec,3:4]= range(rclump$y)
+
+} #end clim loop
+#----------------
+#plot
+
+#set extent
+extent1= union(extent(range.p),extent(range.f))
+extent2= extent(shape)
+cext= union(extent1, extent2)
+
+image(range.p, col="blue", main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
+#plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
+#plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], ext=cext)
+plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
+plot(shape, add=TRUE)
+
+#-------------------
+#Extract stats
+rlim[spec,5]=cellStats(range.p, stat='sum', na.rm=TRUE)
+rlim[spec,6]=cellStats(range.f, stat='sum', na.rm=TRUE)
+
+range.p2=range.p*-2
+
+#cell stats to get area change N/S, use sum -2,1?
+range.b=mosaic(range.p2, range.f, fun=mean, tolerance=0.05)
+freqs= raster::freq(range.b, useNA='no')
+
+freq1= freqs[freqs[,"value"]==-2, "count"]
+if(length(freq1>0)) rlim[spec,7]= freq1
+
+freq1= freqs[freqs[,"value"]==-1, "count"]
+if(length(freq1>0)) rlim[spec,8]= freq1
+
+freq1= freqs[freqs[,"value"]==1, "count"]
+if(length(freq1>0)) rlim[spec,9]= freq1
+
+#-------
+##range extent
+#xy <- xyFromCell(clim.spec.crop,1:ncell(clim.spec.crop))
+#if(clim==1) rlim[spec,1:2]= range(xy[,"y"])
+#if(clim==2) rlim[spec,3:4]= range(xy[,"y"])
+
+  print(spec)
+} #end spec loop
+
+dev.off() #end mapping
+
+#======================
+# PLOT
+rlim= as.data.frame(rlim)
+colnames(rlim)= c('pmin','pmax','fmin','fmax', 'parea','farea','ponly','pandf','fonly')
+rlim$dmax= rlim$fmax - rlim$pmax
+rlim$dmin= rlim$fmin - rlim$pmin
+rlim$index= 1:nrow(rlim)
+
+#convert to poleward / equatorial shift
+#! need to fix for species spanning equator
+rlim$poleward= rlim$dmax
+rlim$poleward[which(rlim$pmax<0 & rlim$pmin<0)]= abs(rlim$dmin[which(rlim$pmax<0 & rlim$pmin<0)])
+
+rlim$eq= abs(rlim$dmin)
+rlim$eq[which(rlim$pmax<0 & rlim$pmin<0)]= rlim$dmax[which(rlim$pmax<0 & rlim$pmin<0)]
+
+#plot(rlim$index, rlim$fmax, col="red")
+#points(rlim$index, rlim$pmax, col="blue")
+
+move= na.omit(rlim$poleward)
+move= move[is.finite(move) ]
+hist(move, breaks=50)
+
+move= na.omit(rlim$eq)
+move= move[is.finite(move) ]
+hist(move, breaks=20)
+
+#area
+d.area= rlim$farea/rlim$parea
+hist(d.area, breaks=20)
+
+hist(rlim$ponly/rlim$parea)
+hist(rlim$fonly/rlim$parea)
+# 'ponly','pandf','fonly'
