@@ -8,6 +8,7 @@ library(picante)
 library(phytools)
 library(ape)
 library(grid)
+library(MuMIn) #for model averaging
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
@@ -16,6 +17,12 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRelevation_all.csv")
+
+#recode torpor
+phy$torpor= NA
+#code as 1 in hibernation or torpor
+phy[which(phy$Torpor_McN %in% c("HIB","Y","Y?") ),"torpor"]=1
+phy[which(phy$Torpor_McN %in% c("N","N?") ),"torpor"]=0
 
 #=======================================
 #CHECK DATA
@@ -34,7 +41,7 @@ plot(phy$Tlc, phy$Tmin.use)
 abline(a=0, b=1)
 
 #Restrict to species with Tmin <Tlc
-#phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
+phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
 
 #-------------------------
 #Update scope and T ambient
@@ -131,7 +138,7 @@ xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
 
 #birds
-plot(birds$Tamb_low, birds$Tmin.use, xlab="Physiological temperature limit (°C)", ylab= "Cold range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
+plot(birds$Tamb_low, birds$Tmin.use, xlab="Physiological temperature limit (?C)", ylab= "Cold range boundary temperature (?C)", xlim=xyrange, ylim=xyrange) 
 abline(a=0, b=1)
 #mammals
 points(mammals$Tamb_low, mammals$Tmin.use, col="gray")
@@ -140,7 +147,7 @@ points(mammals$Tamb_low, mammals$Tmin.use, col="gray")
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
 
 #birds
-plot(birds$Tamb_up, birds$Tmax.use, xlab="Physiological temperature limit (°C)", ylab= "Warm range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
+plot(birds$Tamb_up, birds$Tmax.use, xlab="Physiological temperature limit (?C)", ylab= "Warm range boundary temperature (?C)", xlim=xyrange, ylim=xyrange) 
 abline(a=0, b=1)
 #mammals
 points(mammals$Tamb_up, mammals$Tmax.use, col="gray")
@@ -185,18 +192,35 @@ bird= phy[which(phy$Taxa=="Bird"),]
 mamm= phy[which(phy$Taxa=="Mammal"),]
   
 #bird
-mod1= lm(bird$scope~ log(bird$Mass_g) + bird$diet + bird$Nocturnal) #+bird$Torpor_McN)
-mod1= lm(bird$scope.hot~ log(bird$Mass_g) + bird$diet + bird$Nocturnal) #+bird$Torpor_McN)
+mod1= lm(bird$scope~ log(bird$Mass_g) + bird$diet + bird$Nocturnal +bird$torpor)
+mod1= lm(bird$scope.hot~ log(bird$Mass_g) + bird$diet + bird$Nocturnal +bird$torpor)
 summary(mod1)
 
 #mammal
-mod1= lm(mamm$scope~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal) # +mamm$Torpor_McN)
-mod1= lm(mamm$scope.hot~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal) # +mamm$Torpor_McN)
+mod1= lm(mamm$scope~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal + mamm$torpor)
+mod1= lm(mamm$scope.hot~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal +mamm$torpor)
+
+#mod1= lm(mamm$scope~ log(mamm$Mass_g) +mamm$diet + mamm$Nocturnal + mamm$torpor +log(mamm$Mass_g):mamm$diet +log(mamm$Mass_g):mamm$Nocturnal +log(mamm$Mass_g):mamm$torpor+mamm$diet:mamm$Nocturnal +mamm$diet:mamm$torpor + mamm$Nocturnal:mamm$torpor)
 summary(mod1)
 
 #residual plots
 crPlots(mod1)
+#--------------------------
+mamm1= na.omit(mamm[,c("scope","Mass_g","diet","Nocturnal","torpor")])
+mod1= lm(mamm1$scope~ log(mamm1$Mass_g) +mamm1$diet + mamm1$Nocturnal + mamm1$torpor +log(mamm1$Mass_g):mamm1$diet +log(mamm1$Mass_g):mamm1$Nocturnal +log(mamm1$Mass_g):mamm1$torpor+mamm1$diet:mamm1$Nocturnal +mamm1$diet:mamm1$torpor + mamm1$Nocturnal:mamm1$torpor, na.action = "na.fail")
 
+#MODEL SELECTION
+d_mod=dredge(mod1)
+
+#extract best 5 models and weights
+best.mods= d_mod[1:5,]
+
+ma_mod= model.avg(d_mod)
+summary(ma_mod)
+
+##KEEP IMPORTANCE >0.5
+mod1= lm(mamm$scope~ log(mamm$Mass_g) +mamm$diet + mamm$Nocturnal + mamm$torpor +mamm$diet:mamm$torpor +mamm$diet:mamm$Nocturnal +log(mamm$Mass_g):mamm$torpor)
+anova(mod1)
 #===============================================
 #phylogenetic analysis
 
@@ -311,53 +335,45 @@ BirdTree<-drop.tip(tree_bird,tree_bird$tip.label[not.matched])
 
 #---------------------------
 bird$gen_spec= as.character(bird$gen_spec)
-birdc <- comparative.data(BirdTree, bird[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal")], names.col="gen_spec", vcv=TRUE)
-mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal, birdc)
-mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, birdc)
+birdc <- comparative.data(BirdTree, bird[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal","torpor")], names.col="gen_spec", vcv=TRUE)
+mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, birdc)
+#mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, birdc)
 
 mamm$gen_spec= as.character(mamm$gen_spec)
-mammc <- comparative.data(MammTree, mamm[,c("gen_spec","scope","scope.hot", "Mass..g.","diet","Nocturnal")], names.col="gen_spec", vcv=TRUE)
-mod <- pgls(scope ~ log(Mass..g.) + diet+ Nocturnal, mammc)
-mod <- pgls(scope.hot ~ log(Mass..g.) + diet+ Nocturnal, mammc)
+mammc <- comparative.data(MammTree, mamm[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal","torpor")], names.col="gen_spec", vcv=TRUE)
+mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, mammc)
+#mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, mammc)
 
 #------------------
-setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
-write.csv(phy, "MRelevation_wTraits.csv")
+#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
+#write.csv(phy, "MRelevation_wTraits.csv")
 
 #=========================================================
-###RANGE PLOTS
+#PLOT RELATIONSHIP BETWEEN TEMPERATURE METRICS
 
-setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-rlim.mamm=read.csv("MammalRangeLimits.csv")
-rlim.bird=read.csv("BirdRangeLimits.csv")
+#MIN
+plot(phy$T10q.min, phy$T5q.min, type="p")
+points(phy$T10q.min, phy$Tmin, type="p", col="blue")
+points(phy$T10q.min, phy$Tmedian.min, type="p", col="red")
+abline(a=0,b=1, lwd=2)
 
-#======================
-# PLOT
+plot(phy$Tmin, phy$Tmedian.min, type="p")
+abline(a=0,b=1, lwd=2)
 
-move= na.omit(rlim.bird$poleward)
-length(move[move>0.1]); length(move[move<=0.1])
-bird.p= density(move[move>0.1])
+summary(phy$Tmedian.min-phy$Tmin)
 
-move= na.omit(rlim.bird$eq)
-length(move[move>0.1]); length(move[move<=0.1])
-bird.e= density(move[move>0.1])
+summary(phy$Tsd.min)
 
-move= na.omit(rlim.mamm$poleward)
-length(move[move>0.1]); length(move[move<=0.1])
-mamm.p= density(move[move>0.1])
+#------------------------
+#MAX
+plot(phy$T10q.max, phy$T5q.max, type="p")
+points(phy$T10q.max, phy$Tmax, type="p", col="blue")
+points(phy$T10q.max, phy$Tmedian.max, type="p", col="red")
+abline(a=0,b=1, lwd=2)
 
-move= na.omit(rlim.mamm$eq)
-length(move[move>0.1]); length(move[move<=0.1])
-mamm.e= density(move[move>0.1])
+plot(phy$Tmax, phy$Tmedian.max, type="p")
+abline(a=0,b=1, lwd=2)
 
-#Plot
-setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("RangeShift.pdf", height=10, width=10)
-par(mfrow=c(1,1), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.4, cex.lab=1.4)
+summary(phy$Tmedian.max-phy$Tmax)
 
-plot(bird.p, main="", xlab="Poleward range shift (°)", lwd=4, xlim=range(0,15), ylim=range(0,0.27)) 
-lines(mamm.p, lty="solid",col="grey", lwd=4)
-
-legend("topright", c("birds","mammals"), lty=c("solid", "solid"),col=c("black", "gray"), bty="n", lwd=4)
-
-dev.off()
+summary(phy$Tsd.max)

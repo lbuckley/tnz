@@ -85,14 +85,6 @@ phy$scope.hotW= NBMR / phy$BMR_mlO2_h
 phy$Tamb_lowSS= phy$Tlc-(phy$scopeW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 phy$Tamb_upSS= phy$Tuc+(phy$scope.hotW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 
-#--------------------------
-#set up synomyms
-phy$Species.syn= as.character(phy$Species)
-phy$Species.syn[which(phy$Species.syn=="Galerella sanguinea")]="Herpestes sanguineus"
-phy$Species.syn[which(phy$Species.syn=="Cryptomys bocagei")]="Fukomys bocagei"
-phy$Species.syn[which(phy$Species.syn=="Cryptomys damarensis")]="Fukomys damarensis"
-phy$Species.syn[which(phy$Species.syn=="Cryptomys mechowi")]="Fukomys mechowi"
-
 #-----------------------------------------
 #Estimate range limits in current and future environments
 

@@ -44,6 +44,9 @@ phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
 setwd(paste(mydir,"Out\\", sep=""))
 TminTmax= read.csv("BirdTminTmax.csv")
 
+specgen<- gsub("_", " ", TminTmax$species)
+TminTmax$genspec<- substr(specgen, 1, nchar(specgen)-9)
+
 #Match species
 match1= match(as.character(phy$Spec.syn), as.character(TminTmax$genspec) )
 matched= which(!is.na(match1))
@@ -66,9 +69,11 @@ phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
 
 #Calculate ambient prediction
 #Calculate MR elevation
+
 Tmin= phy$T10q.min
 Tmax= phy$T10q.max
-
+#Tmin= phy$T5q.min
+#Tmax= phy$T5q.max
 #================================
 #METABOLIC CALCULATIONS
 

@@ -52,21 +52,6 @@ phy=read.csv("MRelevation_all.csv")
 phy= as.data.frame(phy)
 #phy=na.omit(phy[,c(5:32,53:54)])
 
-#Use synonyms to match up
-phy$Spec.syn= as.character(phy$Species)
-phy$Spec.syn[which(phy$Spec.syn=="Anas rhynchotis")]="Spatula rhynchotis"
-phy$Spec.syn[which(phy$Spec.syn=="Collocalia vanikorensis")]="Aerodramus vanikorensis"
-phy$Spec.syn[which(phy$Spec.syn=="Aceros plicatus")]="Rhyticeros plicatus"
-phy$Spec.syn[which(phy$Spec.syn=="Coturnix chinensis")]="Synoicus chinensis"
-phy$Spec.syn[which(phy$Spec.syn=="Aramides cajanea")]="Aramides cajaneus"
-phy$Spec.syn[which(phy$Spec.syn=="Gallinula mortierii")]="Tribonyx mortierii"
-phy$Spec.syn[which(phy$Spec.syn=="Gallinula ventralis")]="Tribonyx ventralis"
-phy$Spec.syn[which(phy$Spec.syn=="Gallirallus owstoni")]="Hypotaenidia owstoni"
-phy$Spec.syn[which(phy$Spec.syn=="Porzana cinerea")]="Amaurornis cinerea"
-phy$Spec.syn[which(phy$Spec.syn=="Cacatua roseicapilla")]="Eolophus roseicapilla"
-phy$Spec.syn[which(phy$Spec.syn=="Otus leucotis")]="Ptilopsis leucotis"
-
-
 #Add Tmin Tmix data
 TminTmax= read.csv("BirdTminTmax.csv")
 

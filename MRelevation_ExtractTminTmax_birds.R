@@ -209,16 +209,19 @@ TminTmaxFun<-function(species){
 } #end TminTmaxFun
 #---------------------------
 
-#TminTmaxFun(species.filename[2])
+output3=TminTmaxFun(species.filename[1])
 
 #Run extraction function
-#output<-ldply(species.filename[1:100],TminTmaxFun)
-output<-ldply(species.filename[2:length(species.filename)],TminTmaxFun)
+output<-ldply(species.filename[2:82],TminTmaxFun)
+#output<-ldply(species.filename[1:length(species.filename)],TminTmaxFun)
+
+output2<-ldply(species.filename[83:length(species.filename)],TminTmaxFun)
+
 
 output$genspec= species.matched
 
 #write out
-write.csv(output, paste(wd, "OUT/BirdTminTmax.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT/BirdTminTmax2.csv", sep=""), row.names=F)
 
 
 
