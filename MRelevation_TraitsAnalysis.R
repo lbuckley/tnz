@@ -345,8 +345,8 @@ mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, mammc)
 #mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, mammc)
 
 #------------------
-#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
-#write.csv(phy, "MRelevation_wTraits.csv")
+setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
+write.csv(phy, "MRelevation_wTraits.csv")
 
 #=========================================================
 #PLOT RELATIONSHIP BETWEEN TEMPERATURE METRICS

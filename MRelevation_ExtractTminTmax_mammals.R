@@ -57,46 +57,9 @@ plot(clim.fmax-clim.pmax)
 
 setwd(paste(wd,"MRelevation\\Out\\", sep=""))
 #phy=read.csv("MRelevation_all.csv")
-phy=read.csv("Phy_wTraits.csv")
+phy=read.csv("Phy_all.csv")
 #phy=na.omit(phy)
 phy= phy[phy$Taxa=="Mammal",]
-
-#Use synonyms to match up
-phy.spec= as.character(phy$Species)
-phy.spec[which(phy.spec=="Galerella sanguinea")]="Herpestes sanguineus"
-phy.spec[which(phy.spec=="Cryptomys bocagei")]="Fukomys bocagei"
-phy.spec[which(phy.spec=="Cryptomys damarensis")]="Fukomys damarensis"
-phy.spec[which(phy.spec=="Cryptomys mechowi")]="Fukomys mechowi"
-phy.spec[which(phy.spec=="Marmosa microtarsus")]="Gracilinanus microtarsus"
-phy.spec[which(phy.spec=="Ningaui yvonnae")]="Ningaui yvonneae"
-
-phy.spec[which(phy.spec=="Echymipera kalabu")]="Echymipera kalubu"
-phy.spec[which(phy.spec=="Eptesicus vulturnus")]="Vespadelus vulturnus"
-#phy.spec[which(phy.spec=="Miniopterus schreibersii")]=""
-phy.spec[which(phy.spec=="Anoura caudifera")]="Anoura caudifer"
-phy.spec[which(phy.spec=="Choeroniscus perspicillata")]="Carollia perspicillata" #?
-phy.spec[which(phy.spec=="Artibeus literatus")]="Artibeus lituratus"
-#phy.spec[which(phy.spec=="Pteronotus parnelli")]=""
-phy.spec[which(phy.spec=="Rhinonicteris aurantius")]="Rhinonicteris aurantia"
-phy.spec[which(phy.spec=="Clethrionomys rufocanus")]="Myodes rufocanus"
-phy.spec[which(phy.spec=="Clethrionomys rutilus")]="Myodes rutilus"
-phy.spec[which(phy.spec=="Cricetulus triton")]="Tscherskia triton"
-phy.spec[which(phy.spec=="Apodemus hermonensis")]="Apodemus witherbyi"
-#phy.spec[which(phy.spec=="Mormota flaviventris")]=""
-phy.spec[which(phy.spec=="Nannospalax leucodon")]="Spalax leucodon"
-#phy.spec[which(phy.spec=="Cavia porcellus")]=""
-phy.spec[which(phy.spec=="Procavia johnstoni")]="Procavia capensis"
-phy.spec[which(phy.spec=="Hemiechinus aethiopicus")]="Paraechinus aethiopicus"
-#phy.spec[which(phy.spec=="Equus caballus")]=""
-phy.spec[which(phy.spec=="Ovis orientalis aries")]="Ovis orientalis"
-phy.spec[which(phy.spec=="Capra hircus")]="Capra aegagrus"
-phy.spec[which(phy.spec=="Cervus elaphus c.")]="Cervus elaphus"
-phy.spec[which(phy.spec=="Alopex lagopus")]="Vulpes lagopus"
-phy.spec[which(phy.spec=="Proteles cristatus")]="Proteles cristata"
-phy.spec[which(phy.spec=="Callithrix pygmaea")]="Cebuella pygmaea"
-phy.spec[which(phy.spec=="Dipodillus dasyurus")]="Gerbillus dasyurus"
-phy.spec[which(phy.spec=="Micaelamys namaquensis")]="Aethomys namaquensis"
-phy$Spec.syn= phy.spec
 
 #--------------------------------------------
 #Load shape files
@@ -180,6 +143,7 @@ TminTmaxFun<-function(species){
     T5q.min= quantile(vals, 0.05, na.rm=T)
     T10q.min=quantile(vals, 0.10, na.rm=T)
     Tsd.min= sd(vals,na.rm=T)
+    Tmad.min= mad(vals,na.rm=T)
     }
    if(clim.k==2){
      vals= edges1[,which.max(colMeans(edges1))] #warm edge
@@ -188,12 +152,13 @@ TminTmaxFun<-function(species){
      T5q.max= quantile(vals, 0.95, na.rm=T)
      T10q.max=quantile(vals, 0.90, na.rm=T)
      Tsd.max= sd(vals,na.rm=T)
+     Tmad.max= mad(vals,na.rm=T)
    }
   NumberGrids<-length(vals[!is.na(vals)])
   Area<-gArea(proj.xy)
   } #end clim loop
   
-  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max, NumberGrids,Area,stringsAsFactors=F)
+  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min,Tmad.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max,Tmad.max, NumberGrids,Area,stringsAsFactors=F)
 
 } #end TminTmaxFun
 #---------------------------
@@ -201,8 +166,8 @@ TminTmaxFun<-function(species){
 #TminTmaxFun(species.matched[3])
 
 #Run extraction function
-output<-ldply(species.matched[50:340],TminTmaxFun)
-#output<-ldply(species.matched,TminTmaxFun)
+#output<-ldply(species.matched[50:340],TminTmaxFun)
+output<-ldply(species.matched[1:100],TminTmaxFun)
 
 #write out
 wd="C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"

@@ -43,7 +43,8 @@ phy= phy[-which(phy$Quality %in% c("B","C","D")), ]
 setwd(paste(mydir,"Data\\AddTNZ\\", sep=""))
 riek=read.csv("Rieketal2013.csv")
 bozi=read.csv("DataSet TNZ Bozinovic et al.csv")
-cant=read.csv("Canterbury2002.csv")
+cant=read.csv("Canterbury2002.csv", na.strings = c("NA","---") )
+cant$TRB= gsub("\\*","",cant$TRB)
 
 #Add BMR Data
 bmr=read.csv("anage_data.csv")
@@ -70,7 +71,7 @@ not.matched= which(is.na(match1))
 
 phy.add= as.data.frame( matrix(NA,nrow=length(not.matched), ncol=ncol(phy.all)) )
 names(phy.add)= names(phy.all)
-phy.add[, c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc") ]<- riek[not.matched,c("Species","Tax","Taxa","BM","Tb...C.","Tlc...C.","Tuc...C.")]
+phy.add[, c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc") ]<- riek[not.matched,c("Species","Tax","Taxa","BM..g.","Tb..C.","Tlc..C.","Tuc..C.")]
 phy.add[, "Source" ]="Riek" 
 phy.all= rbind(phy.all,phy.add)
 #----------

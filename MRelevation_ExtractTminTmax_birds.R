@@ -61,27 +61,9 @@ phy=read.csv("MRelevation_all.csv")
 #phy=na.omit(phy)
 
 ##ESTRACT FILES FOR ADDITIONAL SPECIES
-phy=read.csv("Phy_wTraits.csv")
+phy=read.csv("Phy_all.csv")
 
 phy=phy[phy$Taxa=="Bird",]
-
-#Use synonyms to match up
-phy$Spec.syn= as.character(phy$Species)
-phy$Spec.syn[which(phy$Spec.syn=="Anas rhynchotis")]="Spatula rhynchotis"
-phy$Spec.syn[which(phy$Spec.syn=="Collocalia vanikorensis")]="Aerodramus vanikorensis"
-phy$Spec.syn[which(phy$Spec.syn=="Aceros plicatus")]="Rhyticeros plicatus"
-phy$Spec.syn[which(phy$Spec.syn=="Coturnix chinensis")]="Synoicus chinensis"
-phy$Spec.syn[which(phy$Spec.syn=="Aramides cajanea")]="Aramides cajaneus"
-phy$Spec.syn[which(phy$Spec.syn=="Gallinula mortierii")]="Tribonyx mortierii"
-phy$Spec.syn[which(phy$Spec.syn=="Gallinula ventralis")]="Tribonyx ventralis"
-phy$Spec.syn[which(phy$Spec.syn=="Gallirallus owstoni")]="Hypotaenidia owstoni"
-phy$Spec.syn[which(phy$Spec.syn=="Porzana cinerea")]="Amaurornis cinerea"
-phy$Spec.syn[which(phy$Spec.syn=="Cacatua roseicapilla")]="Eolophus roseicapilla"
-phy$Spec.syn[which(phy$Spec.syn=="Otus leucotis")]="Ptilopsis leucotis"
-phy$Spec.syn[which(phy$Spec.syn=="Poecile atricapillus")]="Parus atricapillus"
-phy$Spec.syn[which(phy$Spec.syn=="Junco hyemalis hyemalis")]="Junco hyemalis"
-phy$Spec.syn[which(phy$Spec.syn=="Junco hyemalis oreganus")]="Junco hyemalis"
-phy$Spec.syn[which(phy$Spec.syn=="Hesperiphona vespertina")]="Coccothraustes vespertinus"
 
 #--------------------------------------------
 #Load shape files
@@ -191,6 +173,7 @@ TminTmaxFun<-function(species){
     T5q.min= quantile(vals, 0.05, na.rm=T)
     T10q.min=quantile(vals, 0.10, na.rm=T)
     Tsd.min= sd(vals,na.rm=T)
+    Tmad.min= mad(vals,na.rm=T)
   }
   if(clim.k==2){
     vals= edges1[,which.max(colMeans(edges1))] #warm edge
@@ -199,29 +182,29 @@ TminTmaxFun<-function(species){
     T5q.max= quantile(vals, 0.95, na.rm=T)
     T10q.max=quantile(vals, 0.90, na.rm=T)
     Tsd.max= sd(vals,na.rm=T)
+    Tmad.max= mad(vals,na.rm=T)
   }
   NumberGrids<-length(vals[!is.na(vals)])
   Area<-gArea(proj.xy)
   } #end clim loop
   
-  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max, NumberGrids,Area,stringsAsFactors=F)
+  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min,Tmad.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max,Tmad.max, NumberGrids,Area,stringsAsFactors=F)
   
 } #end TminTmaxFun
 #---------------------------
 
-output3=TminTmaxFun(species.filename[1])
+#output3=TminTmaxFun(species.filename[1])
 
 #Run extraction function
-output<-ldply(species.filename[2:82],TminTmaxFun)
 #output<-ldply(species.filename[1:length(species.filename)],TminTmaxFun)
-
-output2<-ldply(species.filename[83:length(species.filename)],TminTmaxFun)
-
+output<-ldply(species.filename[2:50],TminTmaxFun)
+#output2<-ldply(species.filename[83:length(species.filename)],TminTmaxFun)
 
 output$genspec= species.matched
+output$shapename= species.filename
 
 #write out
-write.csv(output, paste(wd, "OUT/BirdTminTmax2.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT/BirdTminTmax.csv", sep=""), row.names=F)
 
 
 
