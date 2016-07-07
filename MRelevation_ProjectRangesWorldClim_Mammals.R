@@ -49,22 +49,24 @@ phy=read.csv("MRelevation_all.csv")
 Tmin= phy$T10q.min
 Tmax= phy$T10q.max
 
-phy$CMIN_mlO2_hC= as.numeric(as.character(phy$CMIN_mlO2_hC))
-phy$Tlc= as.numeric(as.character(phy$Tlc))
-  
-NBMR= abs(Tmax- Tmin)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
-phy$scopeW= NBMR / phy$BMR_mlO2_h
+#Calculate MR elevation
+NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev<- NBMR / phy$BMR_mlO2_h
 
-NBMR= abs(Tmax - Tmax)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
-phy$scope.hotW= NBMR / phy$BMR_mlO2_h
+NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev.hot<- NBMR / phy$BMR_mlO2_h
 
-phy$Tamb_lowSS= phy$Tlc-(phy$scopeW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
-phy$Tamb_upSS= phy$Tuc+(phy$scope.hotW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
+
+#Add temp prediction
+phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
+phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 
 #Limit to species with data
-phy= phy[!is.na(Tmin)&!is.na(Tmax),]
+phy= phy[!is.na(phy$Tamb_lowSS)&!is.na(phy$Tamb_upSS),]
 #Limit to mammals
+phy$Taxa=gsub("Mammals","Mammal",phy$Taxa)
 phy= phy[which(phy$Taxa=="Mammal"),]
+
 #-----------------------------------------
 #Estimate range limits in current and future environments
 
@@ -80,7 +82,7 @@ par(mfrow=c(4,4), cex=1.2, mar=c(3, 3, 0.5, 0.5), oma=c(0,0,0,0), lwd=1, bty="o"
 setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 
 #LOOP SPECIES
-for(spec in 1:nrow(phy) ){
+for(spec in 100:nrow(phy) ){
 
 	#LOAD SHAPEFILE AND EXTRACT EXT
 	shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
@@ -220,6 +222,11 @@ colnames(rlim)= c('pmin','pmax','fmin','fmax', 'parea','farea','ponly','pandf','
 rlim$dmax= rlim$fmax - rlim$pmax
 rlim$dmin= rlim$fmin - rlim$pmin
 rlim$index= 1:nrow(rlim)
+
+#write out
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+rlim.out= cbind(phy$Species, rlim)
+write.csv(rlim.out,"MammalRlim.csv")
 
 #convert to poleward / equatorial shift
 #! need to fix for species spanning equator

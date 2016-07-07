@@ -167,8 +167,10 @@ TminTmaxFun<-function(species){
 
 #Run extraction function
 #output<-ldply(species.matched[50:340],TminTmaxFun)
-output<-ldply(species.matched[1:100],TminTmaxFun)
+output2<-ldply(species.matched[101:length(species.matched)],TminTmaxFun)
+
+output= rbind(output, output2)
 
 #write out
 wd="C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
-write.csv(output, paste(wd, "OUT\\MammalTminTmax.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT\\MammalTminTmax2.csv", sep=""), row.names=F)

@@ -15,26 +15,29 @@ Tmammal= read.table("Mammals_Max_Min_NEW.txt", header=TRUE)
 Tall= rbind(Tbird, Tmammal)
 
 #READ PHYS DATA
-phy= read.csv("FristoeData.csv")
-tnz= read.csv("Khaliq_etal_commented_ProcB.csv")
-tnz$UCT...C.=as.numeric(as.character(tnz$UCT...C.))
-#tnz=  read.csv("KhaliqHofetal_data.csv")
+phy= read.csv("Khaliq_etal_commented_ProcB.csv")
+phy$UCT...C.=as.numeric(as.character(tnz$UCT...C.))
+phy$gen_spec= paste(phy$Genus,"_",phy$Species,sep="")
+names(phy)[6:9]= c("Mass_g","Tlc","Tuc","TNZ")
+
+  #Limit to high quality
+  #remove poor quality ##LOOSE 36 SPECIEs
+  phy= phy[-which(phy$Quality %in% c("B","C","D")), ]
+  
+frist= read.csv("FristoeData.csv")
 
 #Match species
 #add TNZ  ## Check several UCT 1?
-tnz$spec_gen= paste(tnz$Genus,"_",tnz$Species,sep="")
-match1= match(as.character(phy$gen_spec), tnz$spec_gen )
-matched= which(!is.na(match1))
-phy$Tuc= NA
-phy$Tuc[matched]<- tnz$UCT...C.[match1[matched]]
-phy$Tlc= NA
-phy$Tlc[matched]<- tnz$LCT...C.[match1[matched]]
-phy$Acclimatization[matched]<- as.character(tnz$Acclimatization[match1[matched]])
-phy$Quality[matched]<- as.character(tnz$Quality[match1[matched]])
+phy$Tb= NA
+phy$BMR_mlO2_h= NA
+phy$CMIN_mlO2_hC= NA
 
-#Limit to high quality
-#remove poor quality ##LOOSE 36 SPECIEs
-phy= phy[-which(phy$Quality %in% c("B","C","D")), ]
+match1= match(as.character(phy$gen_spec), frist$gen_spec)
+matched= which(!is.na(match1))
+
+phy$Tb[matched]= frist$Tb...C.[match1[matched]]
+phy$BMR_mlO2_h[matched]= frist$BMR..mlO2.hour.[match1[matched]]
+phy$CMIN_mlO2_hC[matched]= frist$CMIN..ml02.hour..C.[match1[matched]]
 
 #---------------------------------------
 #ADD DATASETS
@@ -57,8 +60,8 @@ noct.mamm=read.csv("Bennie_TimePartitioning.csv")
 
 #--------------------------
 #MATCH DATA
-phy.all= phy[, c("Species","Order","Taxa","Mass..g.","Tb...C.","Tlc","Tuc", "BMR..mlO2.hour.","CMIN..ml02.hour..C.") ]
-names(phy.all)= c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc", "BMR_mlO2_h","CMIN_mlO2_hC")
+phy$Species= paste(phy$Genus,phy$Species, sep=" " )
+phy.all= phy[,c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc", "BMR_mlO2_h","CMIN_mlO2_hC")]
 phy.all$BMR_W=NA
 phy.all$Source="KhaliqHof"
 
@@ -74,6 +77,10 @@ names(phy.add)= names(phy.all)
 phy.add[, c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc") ]<- riek[not.matched,c("Species","Tax","Taxa","BM..g.","Tb..C.","Tlc..C.","Tuc..C.")]
 phy.add[, "Source" ]="Riek" 
 phy.all= rbind(phy.all,phy.add)
+
+#try to match Tb
+#phy.tb= phy.all[is.na(phy.all$Tb) ,]
+#match1= match(riek$Species, phy.tb$Species)
 #----------
 #bozi
 
@@ -334,6 +341,9 @@ phy$Spec.syn[which(phy$Spec.syn=="Micaelamys namaquensis")]="Aethomys namaquensi
 phy$gen_spec= gsub(" ","_",phy$Species)
 
 #==========================================
+#Restrict to species with required data
+phy= phy[which(!is.na(phy$Tb) & !is.na(phy$BMR_mlO2_h) ),]
+
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy, "Phy_all.csv", row.names = FALSE)
