@@ -17,7 +17,7 @@ phy$UpperLat= NA; phy$LowerLat=NA; phy$ShapeName=NA
 #MAMMALS
 #Add Tmin Tmix data
 setwd(paste(mydir,"Out\\", sep=""))
-TminTmax= read.csv("MammalTminTmax.csv")
+TminTmax= read.csv("MammalTminTmax.csv", na.strings = c("NA","Inf","-Inf"))
 
 #Match species
 match1= match(as.character(phy$Spec.syn), as.character(TminTmax$species) )
@@ -42,7 +42,7 @@ phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
 #BIRDS
 #Add Tmin Tmix data
 setwd(paste(mydir,"Out\\", sep=""))
-TminTmax= read.csv("BirdTminTmax.csv")
+TminTmax= read.csv("BirdTminTmax.csv", na.strings = c("NA","Inf","-Inf"))
 
 specgen<- gsub("_", " ", TminTmax$species)
 TminTmax$genspec<- substr(specgen, 1, nchar(specgen)-9)
@@ -66,6 +66,8 @@ phy$Tsd.max[matched]<- TminTmax$Tsd.max[match1[matched]]
 
 phy$UpperLat[matched]<- TminTmax$UpperLat[match1[matched]]
 phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
+
+phy$ShapeName[matched]<- as.character(TminTmax$shapename[match1[matched]])
 
 #Calculate ambient prediction
 #Calculate MR elevation

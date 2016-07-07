@@ -100,11 +100,12 @@ species.filename= speciesnames[match1]
 #---------------------------------------------
 
 #Define function to extract Tmin, Tmax
-# TEST: species=species.filename[15]
+# TEST: species=species.filename[2]
 
 #function to apply to each polygon
 TminTmaxFun<-function(species){
-
+  Tmin=NA; Tmedian.min=NA; T5q.min=NA;T10q.min=NA;Tsd.min=NA;Tmad.min=NA; Tmax=NA; Tmedian.max=NA; T5q.max=NA;T10q.max=NA;Tsd.max=NA;Tmad.max=NA; NumberGrids=NA;Area=NA
+  
   speciesdata<-readOGR(dsn=".",layer=species)
   
   #define current projection of polygon )if needed
@@ -138,6 +139,8 @@ TminTmaxFun<-function(species){
   rmID <- sc.freq$value[which.max(sc.freq$count)]
   clip[!sc %in% rmID] <- NA
   #clip[sc %in% rmID] <- 1 
+  
+  if(cellStats(clip,sum)>0){ #CHECK LAYER
   
   #trim
   clip= trim(clip)
@@ -186,6 +189,7 @@ TminTmaxFun<-function(species){
   }
   NumberGrids<-length(vals[!is.na(vals)])
   Area<-gArea(proj.xy)
+  }# end check clip layer
   } #end clim loop
   
   data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min,Tmad.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max,Tmad.max, NumberGrids,Area,stringsAsFactors=F)
@@ -193,18 +197,20 @@ TminTmaxFun<-function(species){
 } #end TminTmaxFun
 #---------------------------
 
-#output3=TminTmaxFun(species.filename[1])
+#output3=TminTmaxFun(species.filename[2])
 
 #Run extraction function
 #output<-ldply(species.filename[1:length(species.filename)],TminTmaxFun)
-output<-ldply(species.filename[2:50],TminTmaxFun)
-#output2<-ldply(species.filename[83:length(species.filename)],TminTmaxFun)
+#output<-ldply(species.filename[2:50],TminTmaxFun)
+output2<-ldply(species.filename[51:length(species.filename)],TminTmaxFun)
 
-output$genspec= species.matched
-output$shapename= species.filename
+output2$genspec= species.matched[51:length(species.filename)]
+output2$shapename= species.filename[51:length(species.filename)]
+
+output= rbind(output, output2)
 
 #write out
-write.csv(output, paste(wd, "OUT/BirdTminTmax.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT/BirdTminTmax2.csv", sep=""), row.names=F)
 
 
 

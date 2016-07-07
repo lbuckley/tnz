@@ -44,30 +44,6 @@ setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRelevation_all.csv")
 #phy=na.omit(phy[,c(5:32,53:54)])
 
-#Add Tmin Tmix data
-TminTmax= read.csv("MammalTminTmax.csv")
-
-#Match species
-match1= match(as.character(phy$Species), as.character(TminTmax$species) )
-matched= which(!is.na(match1))
-not.matched= which(is.na(match1))
-
-phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA;  phy$Tsd.min= NA; phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA;   phy$Tsd.max= NA;
-
-phy$Tmin[matched]= TminTmax$Tmin[match1[matched]] 
-phy$Tmedian.min[matched]= TminTmax$Tmedian.min[match1[matched]] 
-phy$T5q.min[matched]= TminTmax$T5q.min[match1[matched]] 
-phy$T10q.min[matched]= TminTmax$T10q.min[match1[matched]]  
-phy$Tsd.min[matched]= TminTmax$Tsd.min[match1[matched]] 
-phy$Tmax[matched]= TminTmax$Tmax[match1[matched]] 
-phy$Tmedian.max[matched]= TminTmax$Tmedian.max[match1[matched]] 
-phy$T5q.max[matched]= TminTmax$T5q.max[match1[matched]] 
-phy$T10q.max[matched]= TminTmax$T10q.max[match1[matched]]   
-phy$Tsd.max[matched]= TminTmax$Tsd.max[match1[matched]]
-
-#Limit to species with shapefiles
-phy= phy[matched,]
-
 #Calculate ambient prediction
 #Calculate MR elevation
 Tmin= phy$T10q.min
@@ -85,6 +61,10 @@ phy$scope.hotW= NBMR / phy$BMR_mlO2_h
 phy$Tamb_lowSS= phy$Tlc-(phy$scopeW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 phy$Tamb_upSS= phy$Tuc+(phy$scope.hotW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 
+#Limit to species with data
+phy= phy[!is.na(Tmin)&!is.na(Tmax),]
+#Limit to mammals
+phy= phy[which(phy$Taxa=="Mammal"),]
 #-----------------------------------------
 #Estimate range limits in current and future environments
 
@@ -103,7 +83,7 @@ setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 for(spec in 1:nrow(phy) ){
 
 	#LOAD SHAPEFILE AND EXTRACT EXT
-	shape= shapefile(paste(phy[spec,"Species.syn"],".shp",sep=""))  
+	shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
 	extent2= extent(shape)
 
 for(clim in 1:2){ #present, future  

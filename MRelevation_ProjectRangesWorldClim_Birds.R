@@ -42,44 +42,6 @@ setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRelevation_all.csv")
 #phy=na.omit(phy[,c(5:32,53:54)])
 
-#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
-#phy=read.csv("MRelevation_wTraits.csv")
-#phy=na.omit(phy[,1:30])
-
-#Read physiology data
-setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
-phy= as.data.frame(phy)
-#phy=na.omit(phy[,c(5:32,53:54)])
-
-#Add Tmin Tmix data
-TminTmax= read.csv("BirdTminTmax.csv")
-
-#Match species
-speciesnames= as.character(TminTmax$species)
-speciesnames.match<- substr(speciesnames, 1, nchar(speciesnames)-9)
-speciesnames.match<- gsub("_", " ", speciesnames.match)
-
-match1= match(as.character(phy$Spec.syn), speciesnames.match)
-matched= which(!is.na(match1))
-not.matched= which(is.na(match1))
-
-phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA;  phy$Tsd.min= NA; phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA;   phy$Tsd.max= NA;
-
-phy$Tmin[matched]= TminTmax$Tmin[match1[matched]] 
-phy$Tmedian.min[matched]= TminTmax$Tmedian.min[match1[matched]] 
-phy$T5q.min[matched]= TminTmax$T5q.min[match1[matched]] 
-phy$T10q.min[matched]= TminTmax$T10q.min[match1[matched]]  
-phy$Tsd.min[matched]= TminTmax$Tsd.min[match1[matched]] 
-phy$Tmax[matched]= TminTmax$Tmax[match1[matched]] 
-phy$Tmedian.max[matched]= TminTmax$Tmedian.max[match1[matched]] 
-phy$T5q.max[matched]= TminTmax$T5q.max[match1[matched]] 
-phy$T10q.max[matched]= TminTmax$T10q.max[match1[matched]]   
-phy$Tsd.max[matched]= TminTmax$Tsd.max[match1[matched]]
-
-#Limit to species with shapefiles
-phy= phy[matched,]
-
 #Calculate ambient prediction
 #Calculate MR elevation
 Tmin= phy$T10q.min
@@ -97,6 +59,10 @@ phy$scope.hotW= NBMR / phy$BMR_mlO2_h
 phy$Tamb_lowSS= phy$Tlc-(phy$scopeW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 phy$Tamb_upSS= phy$Tuc+(phy$scope.hotW-1)* phy$BMR_mlO2_h / phy$CMIN_mlO2_hC
 
+#Limit to species with data
+phy= phy[!is.na(Tmin)&!is.na(Tmax),]
+#Limit to birds
+phy= phy[which(phy$Taxa=="Bird"),]
 #-----------------------------------------
 #Estimate range limits in current and future environments
 
@@ -115,7 +81,7 @@ setwd(paste(mydir,"Data\\Shapefiles\\Birds\\", sep=""))
 for(spec in 1:nrow(phy) ){
 
   #LOAD SHAPEFILE AND EXTRACT EXT
-  shape= shapefile(paste(phy[spec,"shapename"],".shp",sep=""))  
+  shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep=""))  
   extent2= extent(shape)
   
 for(clim in 1:2){ #present, future  
