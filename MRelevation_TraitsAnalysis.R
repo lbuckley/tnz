@@ -126,11 +126,11 @@ pdf("MetElev.pdf", height=10, width=10)
 par(mfrow=c(2,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.4)
 
 #LowER
-plot(db, main="", xlab="MR elevation at cold range edge", lwd=4, xlim=range(0,10)) 
+plot(db, main="", xlab="Factorial scope at cold range edge", lwd=4, xlim=range(0,10)) 
 lines(dm, lty="solid",col="grey", lwd=4)
 legend("topright", c("birds","mammals"), lty=c("solid", "solid"),col=c("black", "gray"), bty="n")
 #UPPER
-plot(dbh, main="", xlab="MR elevation at warm range edge", lwd=4, xlim=range(0,4)) 
+plot(dbh, main="", xlab="Factorial scope at warm range edge", lwd=4, xlim=range(0,4)) 
 lines(dmh, lty="solid",col="grey", lwd=4)
 
 #LOWER PRED VS OBS
@@ -138,7 +138,7 @@ xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
 
 #birds
-plot(birds$Tamb_low, birds$Tmin.use, xlab="Physiological temperature limit (?C)", ylab= "Cold range boundary temperature (?C)", xlim=xyrange, ylim=xyrange) 
+plot(birds$Tamb_low, birds$Tmin.use, xlab="Physiological temperature limit (°C)", ylab= "Cold range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
 abline(a=0, b=1)
 #mammals
 points(mammals$Tamb_low, mammals$Tmin.use, col="gray")
@@ -147,13 +147,13 @@ points(mammals$Tamb_low, mammals$Tmin.use, col="gray")
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
 
 #birds
-plot(birds$Tamb_up, birds$Tmax.use, xlab="Physiological temperature limit (?C)", ylab= "Warm range boundary temperature (?C)", xlim=xyrange, ylim=xyrange) 
+plot(birds$Tamb_up, birds$Tmax.use, xlab="Physiological temperature limit (°C)", ylab= "Warm range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
 abline(a=0, b=1)
 #mammals
 points(mammals$Tamb_up, mammals$Tmax.use, col="gray")
 
 dev.off()
-
+ 
 #=============================
 #FIGURE 3: Plot ME facets
 #OPTIONS: color=Order, color=log(Mass..g.), diet, ForStrat, Activity.Nocturnal, Activity.Crepuscular,Activity.Diurnal, Nocturnal         
@@ -162,25 +162,25 @@ dev.off()
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
-p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (C)")+ylab("Cold range boundary temperature (C)")
+p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")
 pl= p + geom_point() + geom_abline(intercept=0, slope=1)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
-p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (C)")+ylab("Warm range boundary temperature (C)")
+p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")
 pu= p + geom_point() + geom_abline(intercept=0, slope=1)
 
 #----------
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("MetFacets.pdf", height=10, width=10)
+pdf("MetFacets.pdf", height=5, width=10)
 
 #plot
 grid.newpage()
-pushViewport(viewport(layout=grid.layout(2,1)))
+pushViewport(viewport(layout=grid.layout(1,1)))
 vplayout<-function(x,y)
   viewport(layout.pos.row=x,layout.pos.col=y)
 print(pl,vp=vplayout(1,1))
-print(pu,vp=vplayout(2,1))
+#print(pu,vp=vplayout(2,1))
 
 dev.off()
 
@@ -206,6 +206,25 @@ summary(mod1)
 #residual plots
 crPlots(mod1)
 #--------------------------
+#BIRDS
+bird1= na.omit(bird[,c("scope","Mass_g","diet","Nocturnal","torpor")])
+mod1= lm(bird1$scope~ log(bird1$Mass_g) +bird1$diet + bird1$Nocturnal + bird1$torpor +log(bird1$Mass_g):bird1$diet +log(bird1$Mass_g):bird1$Nocturnal +log(bird1$Mass_g):bird1$torpor+bird1$diet:bird1$Nocturnal +bird1$diet:bird1$torpor + bird1$Nocturnal:bird1$torpor, na.action = "na.fail")
+
+#MODEL SELECTION
+d_mod=dredge(mod1)
+
+#extract best 5 models and weights
+best.mods= d_mod[1:5,]
+
+ma_mod= model.avg(d_mod)
+summary(ma_mod)
+
+##KEEP IMPORTANCE >0.5
+mod1= lm(bird$scope~ log(bird$Mass_g) +bird$diet + bird$Nocturnal + bird$torpor)
+anova(mod1)
+
+#-----------
+#MAMMALS
 mamm1= na.omit(mamm[,c("scope","Mass_g","diet","Nocturnal","torpor")])
 mod1= lm(mamm1$scope~ log(mamm1$Mass_g) +mamm1$diet + mamm1$Nocturnal + mamm1$torpor +log(mamm1$Mass_g):mamm1$diet +log(mamm1$Mass_g):mamm1$Nocturnal +log(mamm1$Mass_g):mamm1$torpor+mamm1$diet:mamm1$Nocturnal +mamm1$diet:mamm1$torpor + mamm1$Nocturnal:mamm1$torpor, na.action = "na.fail")
 
@@ -221,6 +240,7 @@ summary(ma_mod)
 ##KEEP IMPORTANCE >0.5
 mod1= lm(mamm$scope~ log(mamm$Mass_g) +mamm$diet + mamm$Nocturnal + mamm$torpor +mamm$diet:mamm$torpor +mamm$diet:mamm$Nocturnal +log(mamm$Mass_g):mamm$torpor)
 anova(mod1)
+
 #===============================================
 #phylogenetic analysis
 
@@ -275,18 +295,18 @@ bird.u= bird.u[matched,]
 #              x=0.9*par()$usr[1],y=0.9*par()$usr[3])
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("MePhy.pdf", height=10, width=10)
+pdf("MePhy.pdf", height=10, width=5)
 
-par(mfcol=c(2,2)) 
+par(mfcol=c(2,1)) 
 
 #mammals
 me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"scope"])
 names(me)= mamm.l$gen_spec
 obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 
-me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"scope.hot"])
-names(me)= mamm.u$gen_spec
-obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+#me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"scope.hot"])
+#names(me)= mamm.u$gen_spec
+#obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 ## FIX TRAIT NAs #,method="anc.ML"
 
 #-------------
@@ -295,9 +315,9 @@ me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"scope"
 names(me)= bird.l$gen_spec
 obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 
-me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"scope.hot"])
-names(me)= bird.u$gen_spec
-obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+#me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"scope.hot"])
+#names(me)= bird.u$gen_spec
+#obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 
 dev.off()
 
@@ -305,14 +325,14 @@ dev.off()
 #Phylosignal
 
 phylosignal(mamm.l$scope, MammTree.l)
-phylosignal(mamm.u$scope.hot, MammTree.u)
+#phylosignal(mamm.u$scope.hot, MammTree.u)
 phylosignal(bird.l$scope, BirdTree.l)
-phylosignal(bird.u$scope.hot, BirdTree.u)
+#phylosignal(bird.u$scope.hot, BirdTree.u)
 
 phylosig(MammTree.l, mamm.l$scope, method="lambda") ### SIGNAL
-phylosig(MammTree.u, mamm.u$scope.hot, method="lambda")
+#phylosig(MammTree.u, mamm.u$scope.hot, method="lambda")
 phylosig(BirdTree.l, bird.l$scope, method="lambda")
-phylosig(BirdTree.u, bird.u$scope.hot, method="lambda")
+#phylosig(BirdTree.u, bird.u$scope.hot, method="lambda")
 
 ## OTHER METRICS
 #http://rfunctions.blogspot.com/2014/02/measuring-phylogenetic-signal-in-r.html

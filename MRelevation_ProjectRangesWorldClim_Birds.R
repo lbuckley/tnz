@@ -172,6 +172,7 @@ extent2= extent(shape)
 cext= union(extent1, extent2)
 
 image(range.p, col="blue", main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
+plot(wrld_simpl, add=TRUE, border="gray")
 #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
 #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], ext=cext)
 plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
