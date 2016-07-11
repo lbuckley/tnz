@@ -16,13 +16,35 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+#phy=read.csv("MRelevation_all.csv")
+phy=read.csv("MRelevation_allMASTER.csv")
 
 #recode torpor
 phy$torpor= NA
 #code as 1 in hibernation or torpor
 phy[which(phy$Torpor_McN %in% c("HIB","Y","Y?") ),"torpor"]=1
 phy[which(phy$Torpor_McN %in% c("N","N?") ),"torpor"]=0
+
+#recode constrained
+phy$Cconstrained= NA 
+phy$Wconstrained= NA
+#N
+inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
+phy$Cconstrained[inds]= phy$Nconstrained[inds] 
+phy$Wconstrained[inds]= phy$Sconstrained[inds]
+
+#S
+inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
+phy$Cconstrained[inds]= phy$Sconstrained[inds] 
+phy$Wconstrained[inds]= phy$Nconstrained[inds]
+
+#crosses latitude ## BETTER WAY?
+inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
+con= phy$Sconstrained + phy$Nconstrained
+con[which(con==2)]=1
+
+phy$Cconstrained[inds]= con[inds] 
+phy$Wconstrained[inds]= 1
 
 #=======================================
 #CHECK DATA
@@ -66,6 +88,12 @@ phy[inds,"Tamb_upSS"]=NA
 phy$scope= phy$MetElev
 phy$scope.hot= phy$MetElev.hot
 
+#remove constrained range boundaries
+phy$scope[which(phy$Cconstrained==1)] = NA
+phy$scope.hot[which(phy$Wconstrained==1)] = NA
+# sum(!is.na(phy$scope))
+# sum(!is.na(phy$scope.hot))
+
 #ME density
 #NEED TO CHECK SCOPES >10 # & phy$scope<10
 scopes.b= na.omit(phy$scope[which(phy$Taxa=="Bird")])
@@ -104,6 +132,10 @@ phy[sel,"Tamb_up"]= phy$Tuc[sel]+(peak.bh-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel
 sel= which(phy$Taxa=="Mammal")
 phy[sel,"Tamb_low"]= phy$Tlc[sel]-(peak.m-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
 phy[sel,"Tamb_up"]= phy$Tuc[sel]+(peak.mh-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
+
+#account for constrained
+phy$Tamb_low[which(phy$Cconstrained==1)] = NA
+phy$Tamb_up[which(phy$Wconstrained==1)] = NA
 
 #account for species with Tmax<Tuc
 inds= which(phy$Tuc> phy$Tmax.use)
