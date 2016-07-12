@@ -77,6 +77,9 @@ speciesnames<- gsub(".shp", "", speciesfiles)
 
 #Match names
 match1= match(phy$Spec.syn,speciesnames)
+matched= which(!is.na(match1))
+not.matched= which(is.na(match1))
+
 species.matched=as.character(phy$Spec.syn[!is.na(match1)])
 
 #---------------------------------------------
@@ -89,6 +92,8 @@ TminTmaxFun<-function(species){
   print(species)
   
   speciesdata<-readOGR(dsn=".",layer=species)
+  #save for future loading
+  save(speciesdata, file = paste(species,".rda",sep=""))
   
   #define current projection of polygon )if needed
   proj4string(speciesdata) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"#(as per readOGR)
@@ -106,10 +111,13 @@ TminTmaxFun<-function(species){
     
   #convert species polygon to projection of the climatic raster file
   proj.xy<-spTransform(out,CRS(projection(bio1)))
-  #biggest polygon
-  areas= proj.xy$shape_Area
-  shape= proj.xy[which.max(areas),]
-  clip= raster::mask(bio1,shape)
+ 
+  #biggest polygon, #now use all polygons
+  #areas= proj.xy$shape_Area
+  #shape= proj.xy[which.max(areas),]
+  #clip= raster::mask(bio1,shape)
+  
+  clip= raster::mask(bio1,proj.xy)
   clip= trim(clip)
   
   #find max and min across each column
@@ -167,7 +175,7 @@ TminTmaxFun<-function(species){
 
 #Run extraction function
 #output<-ldply(species.matched[50:340],TminTmaxFun)
-output2<-ldply(species.matched[101:length(species.matched)],TminTmaxFun)
+output2<-ldply(species.matched[1:length(species.matched)],TminTmaxFun)
 
 output= rbind(output, output2)
 

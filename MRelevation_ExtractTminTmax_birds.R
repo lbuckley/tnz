@@ -57,7 +57,7 @@ plot(clim.fmax-clim.pmax)
 #Load physiological data
 
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+#phy=read.csv("MRelevation_all.csv")
 #phy=na.omit(phy)
 
 ##ESTRACT FILES FOR ADDITIONAL SPECIES
@@ -100,18 +100,20 @@ species.filename= speciesnames[match1]
 #---------------------------------------------
 
 #Define function to extract Tmin, Tmax
-# TEST: species=species.filename[2]
+# TEST: species=species.filename[1]
 
 #function to apply to each polygon
 TminTmaxFun<-function(species){
   Tmin=NA; Tmedian.min=NA; T5q.min=NA;T10q.min=NA;Tsd.min=NA;Tmad.min=NA; Tmax=NA; Tmedian.max=NA; T5q.max=NA;T10q.max=NA;Tsd.max=NA;Tmad.max=NA; NumberGrids=NA;Area=NA
   
   speciesdata<-readOGR(dsn=".",layer=species)
+  #save for future loading
+  save(speciesdata, file = paste(species,".rda",sep=""))
   
   #define current projection of polygon )if needed
   proj4string(speciesdata) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"#(as per readOGR)
       out<-speciesdata
-  
+      
   #for upper and lower lat
   latlon<-spTransform(out,CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
   LowerLat<-summary(latlon)$bbox[2,1]#lower latitude - full extent of distribution data
@@ -129,18 +131,19 @@ TminTmaxFun<-function(species){
   #shape= proj.xy[which.max(areas),]
   clip= raster::mask(bio1,proj.xy)
   
-  #clump
-  sc= clump(clip, directions=4)
+  #USE ALL POLYGONS
+  ##clump
+  #sc= clump(clip, directions=4)
   
   ## calculate frequency of each clump/patch
-  sc.freq <- as.data.frame(freq(sc))
-  sc.freq<- sc.freq[!is.na(sc.freq$value),]
+  #sc.freq <- as.data.frame(freq(sc))
+  #sc.freq<- sc.freq[!is.na(sc.freq$value),]
   
-  rmID <- sc.freq$value[which.max(sc.freq$count)]
-  clip[!sc %in% rmID] <- NA
-  #clip[sc %in% rmID] <- 1 
+  #rmID <- sc.freq$value[which.max(sc.freq$count)]
+  #clip[!sc %in% rmID] <- NA
+  ##clip[sc %in% rmID] <- 1 
   
-  if(cellStats(clip,sum)>0){ #CHECK LAYER
+  if(is.finite(cellStats(clip,mean, na.rm=TRUE))) { #CHECK LAYER
   
   #trim
   clip= trim(clip)
@@ -202,15 +205,13 @@ TminTmaxFun<-function(species){
 #Run extraction function
 #output<-ldply(species.filename[1:length(species.filename)],TminTmaxFun)
 #output<-ldply(species.filename[2:50],TminTmaxFun)
-output2<-ldply(species.filename[51:length(species.filename)],TminTmaxFun)
+output<-ldply(species.filename[1:length(species.filename)],TminTmaxFun)
 
-output2$genspec= species.matched[51:length(species.filename)]
-output2$shapename= species.filename[51:length(species.filename)]
-
-output= rbind(output, output2)
+output$genspec= species.matched
+output$shapename= species.filename
 
 #write out
-write.csv(output, paste(wd, "OUT/BirdTminTmax2.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT/BirdTminTmax.csv", sep=""), row.names=F)
 
 
 

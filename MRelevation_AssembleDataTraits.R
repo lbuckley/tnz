@@ -344,6 +344,10 @@ phy$gen_spec= gsub(" ","_",phy$Species)
 #Restrict to species with required data
 phy= phy[which(!is.na(phy$Tb) & !is.na(phy$BMR_mlO2_h) ),]
 
+phy$Taxa= gsub("Birds","Bird",phy$Taxa)
+phy$Taxa= gsub("Mammals","Mammal",phy$Taxa)
+phy$Taxa= as.factor(phy$Taxa)
+
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy, "Phy_all.csv", row.names = FALSE)

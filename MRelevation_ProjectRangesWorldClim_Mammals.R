@@ -46,6 +46,8 @@ phy=read.csv("MRelevation_all.csv")
 
 #Calculate ambient prediction
 #Calculate MR elevation
+
+#TRY MEDIAN
 Tmin= phy$T10q.min
 Tmax= phy$T10q.max
 
@@ -82,7 +84,7 @@ par(mfrow=c(4,4), cex=1.2, mar=c(3, 3, 0.5, 0.5), oma=c(0,0,0,0), lwd=1, bty="o"
 setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 
 #LOOP SPECIES
-for(spec in 100:nrow(phy) ){
+for(spec in 1:nrow(phy) ){
 
 	#LOAD SHAPEFILE AND EXTRACT EXT
 	shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
