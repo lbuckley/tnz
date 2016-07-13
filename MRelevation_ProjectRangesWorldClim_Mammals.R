@@ -41,7 +41,7 @@ plot(clim.fmax-clim.pmax)
 
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+phy=read.csv("MRelevation_allMASTER.csv")
 #phy=na.omit(phy[,c(5:32,53:54)])
 
 #Calculate ambient prediction
@@ -58,21 +58,53 @@ phy$MetElev<- NBMR / phy$BMR_mlO2_h
 NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev.hot<- NBMR / phy$BMR_mlO2_h
 
-
 #Add temp prediction
 phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
 phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 
-#Limit to species with data
-phy= phy[!is.na(phy$Tamb_lowSS)&!is.na(phy$Tamb_upSS),]
 #Limit to mammals
 phy$Taxa=gsub("Mammals","Mammal",phy$Taxa)
 phy= phy[which(phy$Taxa=="Mammal"),]
 
+#--------
+#recode constrained
+phy$Cconstrained= NA 
+phy$Wconstrained= NA
+phy$hemi=NA
+#N
+inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
+phy$Cconstrained[inds]= phy$Nconstrained[inds] 
+phy$Wconstrained[inds]= phy$Sconstrained[inds]
+phy$hemi[inds]= "N"
+
+#S
+inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
+phy$Cconstrained[inds]= phy$Sconstrained[inds] 
+phy$Wconstrained[inds]= phy$Nconstrained[inds]
+phy$hemi[inds]= "S"
+
+#crosses latitude ## BETTER WAY?
+inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
+con= phy$Sconstrained + phy$Nconstrained
+con[which(con==2)]=1
+
+phy$Cconstrained[inds]= con[inds] 
+phy$Wconstrained[inds]= 1
+phy$hemi[inds]= "B"
+
+#Specify edges to predict
+phy$predC=0
+phy$predW=0
+phy$predC[which( !is.na(phy$Tamb_lowSS) & phy$Cconstrained==0 )]=1
+phy$predW[which( !is.na(phy$Tamb_upSS) & phy$Wconstrained==0 )]=1
+
+#Limit to species with data
+phy= phy[phy$predC==1 | phy$predW==1,]
+
 #-----------------------------------------
 #Estimate range limits in current and future environments
 
-rlim= matrix(NA, nrow=nrow(phy), ncol=9) #ymin past, ymax past, ymin future, ymax future, area past, area future
+rlim= matrix(NA, nrow=nrow(phy), ncol=13) #ymin past, ymax past, ymin future, ymax future, area past, area future, ymin med past, ymax med past, ymin med future, ymax med future
 
 #plot range maps
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
@@ -89,22 +121,30 @@ for(spec in 1:nrow(phy) ){
 	#LOAD SHAPEFILE AND EXTRACT EXT
 	shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
 	extent2= extent(shape)
-
+  #load(file = paste(phy[spec,"Spec.syn"],".rda",sep="") )
+	
 for(clim in 1:2){ #present, future  
 
   if(clim==1) clim.pmin1= clim.pmin; clim.pmax1= clim.pmax
   if(clim==2) clim.pmin1= clim.fmin; clim.pmax1= clim.fmax
-    
+
 ## CURRENT CLIMATE
 #Subset to above Tmin and below Tmax
-clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
-clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
-clim.spec= clim.pmin1 + clim.pmax1
+#account for species with only one constraint
+if(phy$predC[spec]==1) clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
+if(phy$predW[spec]==1) clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
+
+#specify prediction
+if(phy$predC[spec]==1 & phy$predW[spec]==1) clim.spec= clim.pmin1 + clim.pmax1
+if(phy$predC[spec]==1 & phy$predW[spec]==0) clim.spec= clim.pmin1
+if(phy$predC[spec]==0 & phy$predW[spec]==1) clim.spec= clim.pmax1
+  
 clim.spec= trim(clim.spec)
 
 #crop to lon extent
 ext.spec= extent(clim.spec)
 ext= extent(t(matrix(c( sort(c(extent2@xmin, extent2@xmax), decreasing=FALSE), ext.spec@ymin, ext.spec@ymax), nrow=2)))
+
 #account for no longitudinal range
 if(ext@xmin==ext@xmax) ext@xmin=ext@xmin-1; ext@xmax=ext@xmax+1
 clim.spec.crop=crop(clim.spec, ext)
@@ -141,6 +181,8 @@ rmID <- sc.freq$value[which(sc.freq$count > sum(sc.freq$count)/100)]
 clim.spec.crop[!sc %in% rmID] <- NA
 clim.spec.crop[sc %in% rmID] <- 1 
 
+clim.spec.crop= trim(clim.spec.crop)
+
 ##Cut off tails, need to account for Central America, etc
 #rsum= rowSums(as.matrix(clim.spec.crop), na.rm=TRUE) 
 #clim.spec.crop[ which(rsum< (max(rsum)/10)), ]<- NA #cut off tails<10% row sums
@@ -166,9 +208,34 @@ range.s= extent(clim.spec.crop)
 if(clim==1) range.p= clim.spec.crop
 if(clim==2) range.f= clim.spec.crop
 
+#Control for constraints
+lat.range= c(range.s@ymin, range.s@ymax) 
+if(phy$predC[spec]==0 & phy$hemi[spec]=="N")lat.range[2]=NA
+if(phy$predC[spec]==0 & phy$hemi[spec]=="S")lat.range[1]=NA
+if(phy$predC[spec]==0 & phy$hemi[spec]=="B"){lat.range[1]=NA; lat.range[2]=NA}
+if(phy$predW[spec]==0 & phy$hemi[spec]=="N")lat.range[1]=NA
+if(phy$predW[spec]==0 & phy$hemi[spec]=="S")lat.range[2]=NA
+  
 #find range
-if(clim==1) rlim[spec,1:2]= c(range.s@ymin, range.s@ymax) 
-if(clim==2) rlim[spec,3:4]= c(range.s@ymin, range.s@ymax) 
+if(clim==1) rlim[spec,1:2]= lat.range 
+if(clim==2) rlim[spec,3:4]= lat.range
+
+#find lat range by column
+yFromRow(clim.spec.crop, row=1:nrow(clim.spec.crop))
+
+pred1=clim.spec.crop
+pred1[!is.na(pred1)] <- 1
+
+yr= raster(clim.spec.crop)
+yr <- init(yr, 'y')
+yr= yr*pred1
+yr= as.matrix(yr)
+
+ymax=  median(apply(yr, MARGIN=2, max, na.rm=TRUE),na.rm=TRUE)
+ymin=  median(apply(yr, MARGIN=2, min, na.rm=TRUE),na.rm=TRUE)
+
+if(clim==1) rlim[spec,10:11]= c(ymin,ymax) 
+if(clim==2) rlim[spec,12:13]= c(ymin,ymax)
 
 } #end clim loop
 #----------------
