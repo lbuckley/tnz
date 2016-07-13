@@ -75,6 +75,10 @@ setwd(sdir)
 speciesfiles<-list.files(sdir,pattern="\\.shp$")#get shape files
 speciesnames<- gsub(".shp", "", speciesfiles)
 
+#get list of saved shapefiles 
+speciesfiles.rda<-list.files(sdir,pattern="\\.rda$")#get shape files
+speciesnames.rda<- gsub("\\.rda", "", speciesfiles.rda)
+
 #Match names
 match1= match(phy$Spec.syn,speciesnames)
 matched= which(!is.na(match1))
@@ -85,15 +89,20 @@ species.matched=as.character(phy$Spec.syn[!is.na(match1)])
 #---------------------------------------------
 
 #Define function to extract Tmin, Tmax
-# TEST: species=species.matched[3]
+# TEST: species=species.matched[1]
 
 #function to apply to each polygon
 TminTmaxFun<-function(species){
   print(species)
   
+  #check if shapefile saved
+  if(species %in% speciesnames.rda) speciesdat= load(paste(species,".rda",sep="") )
+  #read and save shapefile otherwise
+  if(!(species %in% speciesnames.rda)){
   speciesdata<-readOGR(dsn=".",layer=species)
   #save for future loading
   save(speciesdata, file = paste(species,".rda",sep=""))
+  }
   
   #define current projection of polygon )if needed
   proj4string(speciesdata) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"#(as per readOGR)
@@ -118,34 +127,16 @@ TminTmaxFun<-function(species){
   #clip= raster::mask(bio1,shape)
   
   clip= raster::mask(bio1,proj.xy)
-  clip= trim(clip)
+ # clip= trim(clip)
   
+  #--------
   #find max and min across each column
-  #flip distribution and get first and last value each row
-  edges= foreach(i=1:ncol(clip)) %do% firstlast(getValues(t(clip$bio6),i)) 
-  edges1= t(as.data.frame(edges)) #one column warm edges, 1 column cold edges
-  
-  ##extract grid cells at edge
-  #bound <- as(proj.xy, "SpatialLines", sum=FALSE) 
-  #clip3= extract(bio1, bound)
-  ##lengths
-  #SpatialLinesLengths(bound, longlat=TRUE)
-  
-  ##choose biggest section of range
-  #vals= clip3[[which.max(lengths(clip3))]]
-  #ncells= floor(length(vals)/20) #average across 5% of cells
-  
-  ##get climatic grid data where it overlaps the species distribution
-  #clip<-extract(bio1,proj.xy, weights=T,cellnumbers=TRUE)
-  #clip<-ldply(clip)
-  #clip <-ddply(clip,.(cell),summarise,value=mean(value),weight=sum(weight))
-  #clip<-subset(clip,!is.na(clip[,2]))
-  #vals<-clip$value
-  #ws<-clip$weight
+  clipm=  as.matrix(clip)
+  edges1= na.omit(t(apply(clipm, MARGIN=2, firstlast)))
   
   #coldest / warmest cell
   if(clim.k==1) {
-    vals= edges1[,which.min(colMeans(edges1))] #cold edge
+    vals= edges1[,which.min(colMeans(edges1, na.rm=TRUE))] #cold edge
     Tmin= min(vals,na.rm=T)
     Tmedian.min= median(vals,na.rm=T)
     T5q.min= quantile(vals, 0.05, na.rm=T)
@@ -163,10 +154,10 @@ TminTmaxFun<-function(species){
      Tmad.max= mad(vals,na.rm=T)
    }
   NumberGrids<-length(vals[!is.na(vals)])
-  Area<-gArea(proj.xy)
+  #Area<-gArea(proj.xy)
   } #end clim loop
   
-  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min,Tmad.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max,Tmad.max, NumberGrids,Area,stringsAsFactors=F)
+  data.frame(species,UpperLat,LowerLat,Tmin, Tmedian.min, T5q.min,T10q.min,Tsd.min,Tmad.min, Tmax, Tmedian.max, T5q.max,T10q.max,Tsd.max,Tmad.max, NumberGrids,stringsAsFactors=F)
 
 } #end TminTmaxFun
 #---------------------------
@@ -175,10 +166,8 @@ TminTmaxFun<-function(species){
 
 #Run extraction function
 #output<-ldply(species.matched[50:340],TminTmaxFun)
-output2<-ldply(species.matched[1:length(species.matched)],TminTmaxFun)
-
-output= rbind(output, output2)
+output<-ldply(species.matched[1:length(species.matched)],TminTmaxFun)
 
 #write out
 wd="C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
-write.csv(output, paste(wd, "OUT\\MammalTminTmax2.csv", sep=""), row.names=F)
+write.csv(output, paste(wd, "OUT\\MammalTminTmax.csv", sep=""), row.names=F)
