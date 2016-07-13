@@ -100,6 +100,29 @@ phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
 phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 
 #========================================
+#recode constrained
+phy$Cconstrained= NA 
+phy$Wconstrained= NA
+#N
+inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
+phy$Cconstrained[inds]= phy$Nconstrained[inds] 
+phy$Wconstrained[inds]= phy$Sconstrained[inds]
+
+#S
+inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
+phy$Cconstrained[inds]= phy$Sconstrained[inds] 
+phy$Wconstrained[inds]= phy$Nconstrained[inds]
+
+#crosses latitude ## BETTER WAY?
+inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
+con= phy$Sconstrained + phy$Nconstrained
+con[which(con==2)]=1
+
+phy$Cconstrained[inds]= con[inds] 
+phy$Wconstrained[inds]= 1
+#-------
+
+phy= phy[-which(is.na(phy$Species)),]
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))

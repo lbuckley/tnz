@@ -282,6 +282,13 @@ phy[matched,c("Torpor_McN")]<- as.character(bmr.mamm[match1[matched],c("Torpor.e
 #matched= which(!is.na(match1))
 #phy[matched,"noct"]<- as.character(noct.mamm[match1[matched],"Behaviour"] )
 
+#--------------
+#recode torpor
+phy$torpor= NA
+#code as 1 in hibernation or torpor
+phy[which(phy$Torpor_McN %in% c("HIB","Y","Y?") ),"torpor"]=1
+phy[which(phy$Torpor_McN %in% c("N","N?") ),"torpor"]=0
+
 #========================================
 #Add synonyms
 phy$Spec.syn= as.character(phy$Species)
@@ -347,6 +354,26 @@ phy= phy[which(!is.na(phy$Tb) & !is.na(phy$BMR_mlO2_h) ),]
 phy$Taxa= gsub("Birds","Bird",phy$Taxa)
 phy$Taxa= gsub("Mammals","Mammal",phy$Taxa)
 phy$Taxa= as.factor(phy$Taxa)
+
+#========================================
+#Add range constraint information
+phy$Nconstrained=NA
+phy$Sconstrained=NA
+
+setwd(paste(mydir,"Data\\", sep=""))
+const=read.csv("RangeConstraints.csv")
+const$gen_spec= gsub(" ","_", const$Species)
+
+match1= match(as.character(phy$gen_spec), const$gen_spec)
+matched= which(!is.na(match1))
+
+phy$Nconstrained[matched]= const$Nconstrained[match1[matched]]
+phy$Sconstrained[matched]= const$Sconstrained[match1[matched]]
+
+#restrict to species with at least one unconstrained edge
+phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
+
+#========================================
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))

@@ -89,7 +89,7 @@ species.matched=as.character(phy$Spec.syn[!is.na(match1)])
 #---------------------------------------------
 
 #Define function to extract Tmin, Tmax
-# TEST: species=species.matched[1]
+# TEST: species=species.matched[8]
 
 #function to apply to each polygon
 TminTmaxFun<-function(species){
@@ -104,6 +104,7 @@ TminTmaxFun<-function(species){
   save(speciesdata, file = paste(species,".rda",sep=""))
   }
   
+
   #define current projection of polygon )if needed
   proj4string(speciesdata) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"#(as per readOGR)
       out<-speciesdata

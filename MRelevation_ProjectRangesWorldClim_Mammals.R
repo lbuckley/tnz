@@ -35,14 +35,9 @@ clim.fmin= clim.f$bc60bi706/10
 plot(clim.fmax-clim.pmax)
 #-----------------------------------------
 #Load physiological data
-#setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
-#phy=read.csv("MRelevation_wTraits.csv")
-#phy=na.omit(phy[,1:30])
-
-#Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_allMASTER.csv")
-#phy=na.omit(phy[,c(5:32,53:54)])
+phy=read.csv("MRelevation_all.csv")
+#phy=na.omit(phy[,1:30])
 
 #Calculate ambient prediction
 #Calculate MR elevation
@@ -66,32 +61,7 @@ phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 phy$Taxa=gsub("Mammals","Mammal",phy$Taxa)
 phy= phy[which(phy$Taxa=="Mammal"),]
 
-#--------
-#recode constrained
-phy$Cconstrained= NA 
-phy$Wconstrained= NA
-phy$hemi=NA
-#N
-inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
-phy$Cconstrained[inds]= phy$Nconstrained[inds] 
-phy$Wconstrained[inds]= phy$Sconstrained[inds]
-phy$hemi[inds]= "N"
-
-#S
-inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
-phy$Cconstrained[inds]= phy$Sconstrained[inds] 
-phy$Wconstrained[inds]= phy$Nconstrained[inds]
-phy$hemi[inds]= "S"
-
-#crosses latitude ## BETTER WAY?
-inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
-con= phy$Sconstrained + phy$Nconstrained
-con[which(con==2)]=1
-
-phy$Cconstrained[inds]= con[inds] 
-phy$Wconstrained[inds]= 1
-phy$hemi[inds]= "B"
-
+#----------
 #Specify edges to predict
 phy$predC=0
 phy$predW=0
@@ -119,9 +89,9 @@ setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 for(spec in 1:nrow(phy) ){
 
 	#LOAD SHAPEFILE AND EXTRACT EXT
-	shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
+  load(file = paste(phy[spec,"Spec.syn"],".rda",sep="") )
+  #shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep=""))  
 	extent2= extent(shape)
-  #load(file = paste(phy[spec,"Spec.syn"],".rda",sep="") )
 	
 for(clim in 1:2){ #present, future  
 
@@ -221,8 +191,6 @@ if(clim==1) rlim[spec,1:2]= lat.range
 if(clim==2) rlim[spec,3:4]= lat.range
 
 #find lat range by column
-yFromRow(clim.spec.crop, row=1:nrow(clim.spec.crop))
-
 pred1=clim.spec.crop
 pred1[!is.na(pred1)] <- 1
 
@@ -245,6 +213,25 @@ if(clim==2) rlim[spec,12:13]= c(ymin,ymax)
 extent1= union(extent(range.p),extent(range.f))
 extent2= extent(shape)
 cext= union(extent1, extent2)
+
+#make extent square
+xl= cext@xmax - cext@xmin
+yl= cext@ymax - cext@ymin
+xyl= max(xl, yl)
+if(xl<yl){
+  mid= mean(cext@xmax, cext@xmin)
+  cext@xmin= mid-xyl/2
+  cext@xmax= mid+xyl/2
+  if(cext@xmin< (-180)) cext@xmin= -180
+  if(cext@xmax> 180) cext@xmax= 180
+}
+if(xl>yl){
+  mid= mean(cext@ymax, cext@ymin)
+  cext@ymin= mid-xyl/2
+  cext@ymax= mid+xyl/2
+  if(cext@ymin< (-90)) cext@ymin= -90
+  if(cext@ymax> 90) cext@ymax= 90
+}
 
 image(range.p, col="blue", main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
 plot(wrld_simpl, add=TRUE, border="gray")

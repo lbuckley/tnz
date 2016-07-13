@@ -16,35 +16,8 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-#phy=read.csv("MRelevation_all.csv")
-phy=read.csv("MRelevation_allMASTER.csv")
-
-#recode torpor
-phy$torpor= NA
-#code as 1 in hibernation or torpor
-phy[which(phy$Torpor_McN %in% c("HIB","Y","Y?") ),"torpor"]=1
-phy[which(phy$Torpor_McN %in% c("N","N?") ),"torpor"]=0
-
-#recode constrained
-phy$Cconstrained= NA 
-phy$Wconstrained= NA
-#N
-inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
-phy$Cconstrained[inds]= phy$Nconstrained[inds] 
-phy$Wconstrained[inds]= phy$Sconstrained[inds]
-
-#S
-inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
-phy$Cconstrained[inds]= phy$Sconstrained[inds] 
-phy$Wconstrained[inds]= phy$Nconstrained[inds]
-
-#crosses latitude ## BETTER WAY?
-inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
-con= phy$Sconstrained + phy$Nconstrained
-con[which(con==2)]=1
-
-phy$Cconstrained[inds]= con[inds] 
-phy$Wconstrained[inds]= 1
+phy=read.csv("MRelevation_all.csv")
+#phy=read.csv("MRelevation_allMASTER.csv")
 
 #=======================================
 #CHECK DATA
@@ -194,12 +167,12 @@ dev.off()
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
-p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")
+p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=torpor, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")
 pl= p + geom_point() + geom_abline(intercept=0, slope=1)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
-p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, color=diet, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")
+p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, color=torpor, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")
 pu= p + geom_point() + geom_abline(intercept=0, slope=1)
 
 #----------
