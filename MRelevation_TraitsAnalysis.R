@@ -118,74 +118,51 @@ birds= phy[which(phy$Taxa=="Bird"),]
 mammals= phy[which(phy$Taxa=="Mammal"),]
 
 #check outliers
-phy[which(phy$scope>50),]
+#drop one outlier
+phy=phy[-which(phy$scope>100),]
 
 #=============================
-#FIGURE 1: Plot ME density and regression
+#FIGURE 1: PLOT SCOPE AND RESIDUALS
 
-#PLOT SCOPE
-setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
+#DENSITY PLOTS
+dl=ggplot(phy, aes(scope, fill = Taxa)) + 
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))
 
-pdf("MetElev.pdf", height=10, width=10)
+du=  ggplot(phy, aes(scope.hot, fill = Taxa)) + 
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))
 
-par(mfrow=c(2,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.4)
-
-#LowER
-plot(db, main="", xlab="Factorial scope at cold range edge", lwd=4, xlim=range(0,10)) 
-lines(dm, lty="solid",col="grey", lwd=4)
-legend("topright", c("birds","mammals"), lty=c("solid", "solid"),col=c("black", "gray"), bty="n")
-#UPPER
-plot(dbh, main="", xlab="Factorial scope at warm range edge", lwd=4, xlim=range(0,4)) 
-lines(dmh, lty="solid",col="grey", lwd=4)
-
-#LOWER PRED VS OBS
-xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
-xyrange[1]= -60
-
-#birds
-plot(birds$Tamb_low, birds$Tmin.use, xlab="Physiological temperature limit (°C)", ylab= "Cold range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
-abline(a=0, b=1)
-#mammals
-points(mammals$Tamb_low, mammals$Tmin.use, col="gray")
-
-#UPPER PRED VS OBS
-xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
-
-#birds
-plot(birds$Tamb_up, birds$Tmax.use, xlab="Physiological temperature limit (°C)", ylab= "Warm range boundary temperature (°C)", xlim=xyrange, ylim=xyrange) 
-abline(a=0, b=1)
-#mammals
-points(mammals$Tamb_up, mammals$Tmax.use, col="gray")
-
-dev.off()
- 
-#=============================
-#FIGURE 3: Plot ME facets
+#---------------------
+#Plot TRAITS
 #OPTIONS: color=Order, color=log(Mass..g.), diet, ForStrat, Activity.Nocturnal, Activity.Crepuscular,Activity.Diurnal, Nocturnal         
 #Food, Climate, Habitat, Torpor, Clutch_Size, Incubation 
 
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
-p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=torpor, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")
+p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
+#+ scale_color_manual(values = c("gray","darkgreen","purple"))
 pl= p + geom_point() + geom_abline(intercept=0, slope=1)
+#+ facet_wrap(~Taxa)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
-p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, color=torpor, size= log(Mass_g))) + facet_wrap(~Taxa)+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")
+p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g)))+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
+#+ scale_color_manual(values = c("gray","darkgreen","purple"))
 pu= p + geom_point() + geom_abline(intercept=0, slope=1)
 
 #----------
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("MetFacets.pdf", height=5, width=10)
+pdf("Fig1.pdf", height=10, width=12)
 
 #plot
 grid.newpage()
-pushViewport(viewport(layout=grid.layout(1,1)))
+pushViewport(viewport(layout=grid.layout(2,2)))
 vplayout<-function(x,y)
   viewport(layout.pos.row=x,layout.pos.col=y)
-print(pl,vp=vplayout(1,1))
-#print(pu,vp=vplayout(2,1))
+print(dl,vp=vplayout(1,1))
+print(du,vp=vplayout(1,2))
+print(pl,vp=vplayout(2,1))
+print(pu,vp=vplayout(2,2))
 
 dev.off()
 
@@ -265,7 +242,7 @@ tree_bird<-read.nexus("my_tree.tre")
 bird.l= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope")])
 bird.u= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope.hot")])
 
-mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope")])
+mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope","Mass_g")])
 mamm.u= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec", "scope.hot")])
 
 MammTree.l<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.l$gen_spec));
@@ -289,6 +266,7 @@ matched= which(!is.na(match1))
 bird.u= bird.u[matched,]
 
 #-----------------------------
+#FIG 2: MAMMAL PHYLOGENY
 #Conservatism
 #PLOT: http://lukejharmon.github.io/ilhabela/instruction/2015/07/05/plotting-methods/
 
@@ -300,31 +278,37 @@ bird.u= bird.u[matched,]
 #              x=0.9*par()$usr[1],y=0.9*par()$usr[3])
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("MePhy.pdf", height=10, width=5)
+pdf("Fig2.pdf", height=8, width=4)
 
 par(mfcol=c(2,1)) 
 
 #mammals
 me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"scope"])
 names(me)= mamm.l$gen_spec
-obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
 #me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"scope.hot"])
 #names(me)= mamm.u$gen_spec
 #obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 ## FIX TRAIT NAs #,method="anc.ML"
 
+##MASS
+me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"Mass_g"])
+names(me)= mamm.l$gen_spec
+obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
+
+##TORPOP
+
+dev.off()
 #-------------
 #birds
-me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"scope"])
-names(me)= bird.l$gen_spec
-obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+#me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"scope"])
+#names(me)= bird.l$gen_spec
+#obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
 
 #me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"scope.hot"])
 #names(me)= bird.u$gen_spec
 #obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
-
-dev.off()
 
 ---------------------
 #Phylosignal

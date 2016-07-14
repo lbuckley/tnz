@@ -158,9 +158,9 @@ df1$min= df2$y
 
 df1= df1[which(df1$y>extent2@ymin & df1$min<extent2@ymax),]
 
-clim.spec.crop[!(sc %in% clumps)] <- NA
+clim.spec.crop[!(sc %in% df1$clump_id)] <- NA
 
-clim.spec.crop= trim(clim.spec.crop)
+if(!is.na(sum(as.matrix(clim.spec.crop))) ) clim.spec.crop= trim(clim.spec.crop)
 
 ##Cut off tails, need to account for Central America, etc
 #rsum= rowSums(as.matrix(clim.spec.crop), na.rm=TRUE) 
@@ -248,7 +248,7 @@ plot(wrld_simpl, add=TRUE, border="gray")
 #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], ext=cext)
 plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
 plot(shape, add=TRUE)
-
+legend("topleft", legend= c(paste("Cold=",phy$predC[spec]),paste("Warm=",phy$predW[spec]) ),bty="n")
 #-------------------
 #Extract stats
 rlim[spec,5]=cellStats(range.p, stat='sum', na.rm=TRUE)
@@ -283,40 +283,10 @@ dev.off() #end mapping
 #======================
 # PLOT
 rlim= as.data.frame(rlim)
-colnames(rlim)= c('pmin','pmax','fmin','fmax', 'parea','farea','ponly','pandf','fonly')
-rlim$dmax= rlim$fmax - rlim$pmax
-rlim$dmin= rlim$fmin - rlim$pmin
-rlim$index= 1:nrow(rlim)
+colnames(rlim)= c('pmin','pmax','fmin','fmax', 'parea','farea','ponly','pandf','fonly', 'pmin.median','pmax.median','fmin.median','fmax.median')
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 rlim.out= cbind(phy$Species, rlim)
 write.csv(rlim.out,"BirdRlim.csv")
 #=======================
-
-#convert to poleward / equatorial shift
-#! need to fix for species spanning equator
-rlim$poleward= rlim$dmax
-rlim$poleward[which(rlim$pmax<0 & rlim$pmin<0)]= abs(rlim$dmin[which(rlim$pmax<0 & rlim$pmin<0)])
-
-rlim$eq= abs(rlim$dmin)
-rlim$eq[which(rlim$pmax<0 & rlim$pmin<0)]= rlim$dmax[which(rlim$pmax<0 & rlim$pmin<0)]
-
-#plot(rlim$index, rlim$fmax, col="red")
-#points(rlim$index, rlim$pmax, col="blue")
-
-move= na.omit(rlim$poleward)
-move= move[is.finite(move) ]
-hist(move, breaks=50)
-
-move= na.omit(rlim$eq)
-move= move[is.finite(move) ]
-hist(move, breaks=20)
-
-#area
-d.area= rlim$farea/rlim$parea
-hist(d.area, breaks=20)
-
-hist(rlim$ponly/rlim$parea)
-hist(rlim$fonly/rlim$parea)
-# 'ponly','pandf','fonly'
