@@ -9,6 +9,8 @@
 
 library(dismo)
 library(raster)
+library(maptools)
+data(wrld_simpl)
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
@@ -64,6 +66,15 @@ phy$predW=0
 phy$predC[which( !is.na(phy$Tamb_lowSS) & phy$Cconstrained==0 )]=1
 phy$predW[which( !is.na(phy$Tamb_upSS) & phy$Wconstrained==0 )]=1
 
+#add hemisphere
+phy$hemi=NA
+inds= which(phy$LowerLat>0)
+phy$hemi[inds]="N"
+inds= which(phy$UpperLat<0)
+phy$hemi[inds]="S"
+inds= which(phy$LowerLat<0 & phy$UpperLat>0)
+phy$hemi[inds]="B"
+
 #Limit to species with data
 phy= phy[phy$predC==1 | phy$predW==1,]
 
@@ -81,12 +92,20 @@ par(mfrow=c(4,4), cex=1.2, mar=c(3, 3, 0.5, 0.5), oma=c(0,0,0,0), lwd=1, bty="o"
 #change directory back for shapefiles
 setwd(paste(mydir,"Data\\Shapefiles\\Birds\\", sep=""))
 
+#get list of saved shapefiles 
+sdir= paste(mydir,"Data\\Shapefiles\\Birds\\", sep="")
+speciesfiles.rds<-list.files(sdir,pattern="\\.rds$")#get shape files
+speciesnames.rds<- gsub("\\.rds", "", speciesfiles.rds)
+
+#---------
 #LOOP SPECIES
 for(spec in 1:nrow(phy) ){
 
   #LOAD SHAPEFILE AND EXTRACT EXT
-  shape= load(paste(phy[spec,"ShapeName"],".rda",sep="") )
   #shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep=""))  
+  #saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep=""))
+  shape= readRDS(paste(phy[spec,"ShapeName"],".rds",sep=""))
+  
   extent2= extent(shape)
   
 for(clim in 1:2){ #present, future  
@@ -125,26 +144,21 @@ sc= clump(clim.spec.crop, directions=4)
 
 clump_id <- getValues(sc) 
 xy <- xyFromCell(sc,1:ncell(sc))
-df <- data.frame(xy, clump_id, is_clump = sc[] %in% freq(sc, useNA = 'no')[,1])
+
+#clump freqs
+freqs= as.data.frame( freq(sc, useNA = 'no') )
+#remove small clumps
+freqs <- freqs[which(freqs$count> max(freqs$count)/20 ),]
+#find clumps overlapping distribution  
+df <- data.frame(xy, clump_id, is_clump = sc[] %in% freqs$value)
 df= df[df$is_clump == T, ]
+df1= aggregate(df, list(df$clump_id),max)
+df2=  aggregate(df, list(df$clump_id),min)
+df1$min= df2$y
 
-clumps= unique(df[df$y<extent2@ymax & df$y>extent2@ymin,"clump_id"])
-rclump= df[df$"clump_id" %in% clumps, ]
+df1= df1[which(df1$y>extent2@ymin & df1$min<extent2@ymax),]
 
-clim.spec.crop[!sc %in% clumps] <- NA
-#-----------------------------
-
-# calculate frequency of each clump/patch
-sc.freq <- as.data.frame(freq(sc))
-sc.freq<- sc.freq[!is.na(sc.freq$value),]
-
-#get rid of small clumps
-## store clump ID's with small size
-rmID <- sc.freq$value[which(sc.freq$count > sum(sc.freq$count)/100)]
-##restrict to biggest clump
-#rmID <- sc.freq$value[which.max(sc.freq$count)]
-clim.spec.crop[!sc %in% rmID] <- NA
-clim.spec.crop[sc %in% rmID] <- 1 
+clim.spec.crop[!(sc %in% clumps)] <- NA
 
 clim.spec.crop= trim(clim.spec.crop)
 
@@ -214,7 +228,7 @@ xl= cext@xmax - cext@xmin
 yl= cext@ymax - cext@ymin
 xyl= max(xl, yl)
 if(xl<yl){
-  mid= mean(cext@xmax, cext@xmin)
+  mid= mean( c(cext@xmax, cext@xmin) )
   cext@xmin= mid-xyl/2
   cext@xmax= mid+xyl/2
   if(cext@xmin< (-180)) cext@xmin= -180
@@ -278,6 +292,7 @@ rlim$index= 1:nrow(rlim)
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 rlim.out= cbind(phy$Species, rlim)
 write.csv(rlim.out,"BirdRlim.csv")
+#=======================
 
 #convert to poleward / equatorial shift
 #! need to fix for species spanning equator
