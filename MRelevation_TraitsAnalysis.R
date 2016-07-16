@@ -126,10 +126,10 @@ phy=phy[-which(phy$scope>100),]
 
 #DENSITY PLOTS
 dl=ggplot(phy, aes(scope, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()
 
 du=  ggplot(phy, aes(scope.hot, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()
 
 #---------------------
 #Plot TRAITS
@@ -141,14 +141,14 @@ xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
 p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl= p + geom_point() + geom_abline(intercept=0, slope=1)
+pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()
 #+ facet_wrap(~Taxa)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
 p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g)))+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pu= p + geom_point() + geom_abline(intercept=0, slope=1)
+pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()
 
 #----------
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
@@ -168,8 +168,6 @@ dev.off()
 
 #-----------------------------------
 #Models
-phy=phy[which(phy$scope<10),]
-
 bird= phy[which(phy$Taxa=="Bird"),]
 mamm= phy[which(phy$Taxa=="Mammal"),]
   
@@ -344,14 +342,16 @@ BirdTree<-drop.tip(tree_bird,tree_bird$tip.label[not.matched])
 
 #---------------------------
 bird$gen_spec= as.character(bird$gen_spec)
-birdc <- comparative.data(BirdTree, bird[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal","torpor")], names.col="gen_spec", vcv=TRUE)
-mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, birdc)
+birdc <- comparative.data(BirdTree, bird[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal")], names.col="gen_spec", vcv=TRUE)
+mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal, birdc)
 #mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, birdc)
+modn <- pgls(scope ~ 1, birdc)
+anova.pgls(mod, modn)
 
 mamm$gen_spec= as.character(mamm$gen_spec)
-mammc <- comparative.data(MammTree, mamm[,c("gen_spec","scope","scope.hot", "Mass_g","diet","Nocturnal","torpor")], names.col="gen_spec", vcv=TRUE)
+mammc <- comparative.data(MammTree, mamm[,c("gen_spec","scope", "Mass_g","diet","Nocturnal","torpor")], names.col="gen_spec", vcv=TRUE) #"scope.hot",
 mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, mammc)
-#mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal, mammc)
+#mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal+torpor, mammc)
 
 #------------------
 setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
