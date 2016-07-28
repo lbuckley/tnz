@@ -12,7 +12,7 @@ phy= read.csv("Phy_all.csv")
 phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA; phy$Tsd.min= NA;
 phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA; phy$Tsd.max= NA;
 
-phy$UpperLat= NA; phy$LowerLat=NA; phy$ShapeName=NA
+phy$UpperLat= NA; phy$LowerLat=NA; phy$ShapeName=NA; phy$Area=NA;
 
 #MAMMALS
 #Add Tmin Tmix data
@@ -38,6 +38,7 @@ phy$Tsd.max[matched]<- TminTmax$Tsd.max[match1[matched]]
 
 phy$UpperLat[matched]<- TminTmax$UpperLat[match1[matched]]
 phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
+phy$Area[matched]<- TminTmax$NumberGrids[match1[matched]]
 
 #BIRDS
 #Add Tmin Tmix data
@@ -66,7 +67,7 @@ phy$Tsd.max[matched]<- TminTmax$Tsd.max[match1[matched]]
 
 phy$UpperLat[matched]<- TminTmax$UpperLat[match1[matched]]
 phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
-
+phy$Area[matched]<- TminTmax$NumberGrids[match1[matched]]
 phy$ShapeName[matched]<- as.character(TminTmax$shapename[match1[matched]])
 
 #Calculate ambient prediction
