@@ -256,31 +256,31 @@ tree_bird<-read.nexus("my_tree.tre")
 
 #matching
 ## CHANGE TO ACCOUNT FOR SYNONYMS
-bird.l= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope")])
+bird.l= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope","Mass_g")])
 bird.u= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope.hot")])
 
 mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope","Mass_g")])
 mamm.u= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec", "scope.hot")])
 
 MammTree.l<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.l$gen_spec));
-match1= match(mamm.l$gen_spec, speTree1$tip.label)
-matched= which(!is.na(match1))
-mamm.l= mamm.l[matched,]
+match1= match(MammTree.l$tip.label, mamm.l$gen_spec)
+mamm.l <- mamm.l[match1,]
+rownames(mamm.l)= mamm.l$gen_spec
 
 MammTree.u<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.u$gen_spec));
-match1= match(mamm.u$gen_spec, speTree1$tip.label)
-matched= which(!is.na(match1))
-mamm.u= mamm.u[matched,]
+match1= match(MammTree.u$tip.label, mamm.u$gen_spec)
+mamm.u <- mamm.u[match1,]
+rownames(mamm.u)= mamm.u$gen_spec
 
-BirdTree.l<-drop.tip(tree_bird, setdiff(tree_bird$tip.label, bird.l$gen_spec));
-match1= match(bird.l$gen_spec, tree_bird$tip.label)
-matched= which(!is.na(match1))
-bird.l= bird.l[matched,]
+BirdTree.l<-drop.tip(BirdTree, setdiff(BirdTree$tip.label, bird.l$gen_spec));
+match1= match(BirdTree.l$tip.label, bird.l$gen_spec)
+bird.l <- bird.l[match1,]
+rownames(bird.l)= bird.l$gen_spec
 
-BirdTree.u<-drop.tip(tree_bird, setdiff(tree_bird$tip.label, bird.u$gen_spec));
-match1= match(bird.u$gen_spec, tree_bird$tip.label)
-matched= which(!is.na(match1))
-bird.u= bird.u[matched,]
+BirdTree.u<-drop.tip(BirdTree, setdiff(BirdTree$tip.label, bird.u$gen_spec));
+match1= match(BirdTree.u$tip.label, bird.u$gen_spec)
+bird.u <- bird.u[match1,]
+rownames(bird.u)= bird.u$gen_spec
 
 #-----------------------------
 #FIG 2: MAMMAL PHYLOGENY
@@ -295,18 +295,18 @@ bird.u= bird.u[matched,]
 #              x=0.9*par()$usr[1],y=0.9*par()$usr[3])
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("Fig2.pdf", height=8, width=4)
+pdf("FigSphy.pdf", height=8, width=4)
 
-par(mfcol=c(2,1)) 
+par(mfcol=c(3,2)) 
 
 #mammals
 me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"scope"])
 names(me)= mamm.l$gen_spec
 obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
-#me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"scope.hot"])
-#names(me)= mamm.u$gen_spec
-#obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"scope.hot"])
+names(me)= mamm.u$gen_spec
+obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 ## FIX TRAIT NAs #,method="anc.ML"
 
 ##MASS
@@ -315,52 +315,28 @@ names(me)= mamm.l$gen_spec
 obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
 ##TORPOP
+#frame()
 
-dev.off()
 #-------------
 #birds
-#me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"scope"])
-#names(me)= bird.l$gen_spec
-#obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"scope"])
+names(me)= bird.l$gen_spec
+obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
-#me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"scope.hot"])
-#names(me)= bird.u$gen_spec
-#obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan")
+me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"scope.hot"])
+names(me)= bird.u$gen_spec
+obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
----------------------
-#Phylosignal
+##MASS
+me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"Mass_g"])
+names(me)= bird.l$gen_spec
+obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
-phylosignal(mamm.l$scope, MammTree.l)
-#phylosignal(mamm.u$scope.hot, MammTree.u)
-phylosignal(bird.l$scope, BirdTree.l)
-#phylosignal(bird.u$scope.hot, BirdTree.u)
-
-phylosig(MammTree.l, mamm.l$scope, method="lambda") ### SIGNAL
-#phylosig(MammTree.u, mamm.u$scope.hot, method="lambda")
-phylosig(BirdTree.l, bird.l$scope, method="lambda")
-#phylosig(BirdTree.u, bird.u$scope.hot, method="lambda")
+dev.off()
 
 ## OTHER METRICS
 #http://rfunctions.blogspot.com/2014/02/measuring-phylogenetic-signal-in-r.html
 #http://webpages.sdsmt.edu/~dbapst/Analyzing_Trait_Evolution_in_R.pdf
-#-------------------
-#CHECK SIGNAL IN PREDICTORS
-
-mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope","Mass_g","Nocturnal","torpor","diet")])
-
-MammTree.l<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.l$gen_spec));
-match1= match(mamm.l$gen_spec, speTree1$tip.label)
-matched= which(!is.na(match1))
-mamm.l= mamm.l[matched,]
-
-#Predictors
-phylosignal(mamm.l$Mass_g, MammTree.l)
-phylosignal(mamm.l$Nocturnal, MammTree.l)
-phylosignal(mamm.l$torpor, MammTree.l)
-
-phylosig(MammTree.l, mamm.l$Mass_g, method="lambda")
-phylosig(MammTree.l, mamm.l$Nocturnal, method="lambda")
-phylosig(MammTree.l, mamm.l$torpor, method="lambda")
 
 #------------------------------------------------------
 #PGLS
@@ -391,12 +367,15 @@ mammc <- comparative.data(MammTree, mamm[,c("gen_spec","scope", "Mass_g","diet",
 mod <- pgls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, mammc)
 #mod <- pgls(scope.hot ~ log(Mass_g) + diet+ Nocturnal+torpor, mammc)
 
-#------------------------------------
+#========================================
+#Phylogenetic supplement
+
 #http://lukejharmon.github.io/ilhabela/instruction/2015/07/03/PGLS/
 #http://www.mpcm-evolution.org/OPM/Chapter5_OPM/OPM_chap5.pdf
 
 #corPagel,corGrafen, corMartins and corBlomberg
 
+## MAMMAL COLD
 mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope","Mass_g","Nocturnal","torpor","diet")])
 
 MammTree.l<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.l$gen_spec));
@@ -404,12 +383,24 @@ match1= match(MammTree.l$tip.label, mamm.l$gen_spec)
 mamm.l <- mamm.l[match1,]
 rownames(mamm.l)= mamm.l$gen_spec
 
-pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corBrownian(phy = MammTree.l), data = mamm.l, method = "ML")
+#--------------------
+#CHECK SIGNAL IN PREDICTORS
 
-pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
+#Predictors
+phylosignal(mamm.l$Mass_g, MammTree.l)
+phylosignal(mamm.l$Nocturnal, MammTree.l)
+phylosignal(mamm.l$torpor, MammTree.l)
 
-pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
+phylosig(MammTree.l, mamm.l$Mass_g, method="lambda")
+phylosig(MammTree.l, mamm.l$Nocturnal, method="lambda")
+phylosig(MammTree.l, mamm.l$torpor, method="lambda")
 
+#---------------------
+#PHYLO SIGNAL IN RESPONSE
+phylosignal(mamm.l$scope, MammTree.l)
+phylosig(MammTree.l, mamm.l$scope, method="lambda")
+
+#PHYLOSIGNAL IN RESIDUALS
 #non-phylo models
 pglsModel= lm(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, data=mamm.l)
 plot(pglsModel)
@@ -426,10 +417,20 @@ res <- resid(pglsModel, type="n")
 qqnorm(res)
 qqline(res)
 
+#------------------
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corBrownian(phy = MammTree.l), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
+
+summary(pglsModel)
 #------------
-#Fit lambda simulataneous
+#Fit lambda simultaneous
 fitPagel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation=corPagel(value=0.8, phy=MammTree.l), data=mamm.l)
 intervals(fitPagel, which="var-cov")
+summary(fitPagel)
 
 fitPagel0 <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(value = 0, phy = MammTree.l, fixed = TRUE), data = mamm.l) # independence
 fitPagel1 <- gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(value = 1, phy = MammTree.l, fixed = TRUE), data = mamm.l) # Brownian motion
@@ -442,6 +443,106 @@ lambda <- seq(0, 1, length.out = 100)
 lik <- sapply(lambda, function(lambda) logLik(gls(scope ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(value = lambda, phy = MammTree.l, fixed = TRUE), data = mamm.l)))
 plot(lik ~ lambda, type = "l", main = expression(paste("Likelihood Plot for ", lambda)), ylab = "Log Likelihood", xlab = expression(lambda))
 abline(v = fitPagel$modelStruct, col = "red")
+
+#-----------------------------------
+## MAMMAL WARM
+mamm.l= na.omit(phy[which(phy$Taxa=="Mammal"),c("gen_spec","scope.hot","Mass_g","Nocturnal","torpor","diet")])
+
+MammTree.l<-drop.tip(speTree1, setdiff(speTree1$tip.label, mamm.l$gen_spec));
+match1= match(MammTree.l$tip.label, mamm.l$gen_spec)
+mamm.l <- mamm.l[match1,]
+rownames(mamm.l)= mamm.l$gen_spec
+
+#---------------------
+#PHYLO SIGNAL IN RESPONSE
+phylosignal(mamm.l$scope.hot, MammTree.l)
+phylosig(MammTree.l, mamm.l$scope.hot, method="lambda")
+
+#PHYLOSIGNAL IN RESIDUALS
+#non-phylo models
+pglsModel= lm(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, data=mamm.l)
+plot(pglsModel)
+#------------
+summary(pglsModel)
+anova(pglsModel)
+
+phylosignal( as.vector(pglsModel$residuals), MammTree.l)
+phylosig(MammTree.l, as.vector(pglsModel$residuals), method="lambda")
+
+#------------------
+
+pglsModel <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corBrownian(phy = MammTree.l), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
+
+#------------
+#Fit lambda simultaneous
+fitPagel <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation=corPagel(value=0.8, phy=MammTree.l), data=mamm.l)
+intervals(fitPagel, which="var-cov")
+summary(fitPagel)
+
+fitPagel0 <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(value = 0, phy = MammTree.l, fixed = TRUE), data = mamm.l) # independence
+fitPagel1 <- gls(scope.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corPagel(value = 1, phy = MammTree.l, fixed = TRUE), data = mamm.l) # Brownian motion
+
+anova(fitPagel, fitPagel0) #almost reject independence
+anova(fitPagel, fitPagel1) #reject brownian
+
+#-----------------------------------
+## BIRD COLD
+mamm.l= na.omit(phy[which(phy$Taxa=="Bird"),c("gen_spec","scope","Mass_g","Nocturnal","diet")])
+
+MammTree.l<-drop.tip(BirdTree, setdiff(BirdTree$tip.label, mamm.l$gen_spec));
+match1= match(MammTree.l$tip.label, mamm.l$gen_spec)
+mamm.l <- mamm.l[match1,]
+rownames(mamm.l)= mamm.l$gen_spec
+
+#--------------------
+#CHECK SIGNAL IN PREDICTORS
+
+#Predictors
+phylosignal(mamm.l$Mass_g, MammTree.l)
+phylosignal(mamm.l$Nocturnal, MammTree.l)
+
+phylosig(MammTree.l, mamm.l$Mass_g, method="lambda")
+phylosig(MammTree.l, mamm.l$Nocturnal, method="lambda")
+
+#---------------------
+#PHYLO SIGNAL IN RESPONSE
+phylosignal(mamm.l$scope, MammTree.l)
+phylosig(MammTree.l, mamm.l$scope, method="lambda")
+
+#PHYLOSIGNAL IN RESIDUALS
+#non-phylo models
+pglsModel= lm(scope ~ log(Mass_g) + diet+ Nocturnal, data=mamm.l)
+plot(pglsModel)
+#------------
+summary(pglsModel)
+anova(pglsModel)
+
+phylosignal( as.vector(pglsModel$residuals), MammTree.l)
+phylosig(MammTree.l, as.vector(pglsModel$residuals), method="lambda")
+
+#------------------
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corBrownian(phy = MammTree.l), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
+
+pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
+
+#------------
+#Fit lambda simultaneous
+fitPagel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation=corPagel(value=0.8, phy=MammTree.l), data=mamm.l)
+intervals(fitPagel, which="var-cov")
+summary(fitPagel)
+
+fitPagel0 <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corPagel(value = 0, phy = MammTree.l, fixed = TRUE), data = mamm.l) # independence
+fitPagel1 <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corPagel(value = 1, phy = MammTree.l, fixed = TRUE), data = mamm.l) # Brownian motion
+
+anova(fitPagel, fitPagel0) #almost reject independence
+anova(fitPagel, fitPagel1) #reject brownian
 
 #------------------
 setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
