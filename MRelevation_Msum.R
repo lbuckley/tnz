@@ -66,10 +66,12 @@ phy$pMsum.hot<- phy$Msum_mlO2_h / NBMR
 median(phy$pMsum, na.rm=TRUE)
 mean(phy$pMsum, na.rm=TRUE)
 
+sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
 
 phy$Tamb_low_Msum= phy$Tlc- (phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
 
+phymsum= phy[!is.na(phy$pMsum),]
 #--------------
 
 #Write out
@@ -84,7 +86,7 @@ hist(na.omit(phy$pMsum),breaks=8)
 #-----------
 
 hl=ggplot(phy, aes(pMsum, fill = Taxa)) + 
-  geom_histogram(binwidth = 0.2)+xlab("Msum / Mcrb")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw() +xlim(c(0,2.25))
+  geom_histogram(binwidth = 0.2)+labs(x=expression(Msum / MR[CRB]))+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw() +xlim(c(0,2.25))+theme(axis.title=element_text(size=rel(1.3)))
 
 #Plot TRAITS
 
@@ -94,7 +96,7 @@ xyrange= range(c(phy$Tamb_low_Msum, phy$Tmin.use), na.rm=TRUE)
 #xyrange[1]= -60
 p <- ggplot(data = phy, aes(x = Tamb_low_Msum, y = T10q.min, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()
+pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.3)))
 #+ facet_wrap(~Taxa)
 
 #------------------------

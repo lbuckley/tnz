@@ -9,8 +9,8 @@ phy= read.csv("Phy_all.csv")
 #---------------------------------------
 
 #ADD Tmin / Tmax
-phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA; phy$Tsd.min= NA;
-phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA; phy$Tsd.max= NA;
+phy$Tmin= NA; phy$Tmedian.min= NA; phy$T5q.min= NA; phy$T10q.min= NA; phy$Tsd.min= NA; phy$Tmad.min= NA
+phy$Tmax= NA; phy$Tmedian.max= NA; phy$T5q.max= NA; phy$T10q.max= NA; phy$Tsd.max= NA; phy$Tmad.min= NA
 
 phy$UpperLat= NA; phy$LowerLat=NA; phy$ShapeName=NA; phy$Area=NA;
 
@@ -29,12 +29,14 @@ phy$Tmedian.min[matched]<- TminTmax$Tmedian.min[match1[matched]]
 phy$T5q.min[matched]<- TminTmax$T5q.min[match1[matched]]
 phy$T10q.min[matched]<- TminTmax$T10q.min[match1[matched]]
 phy$Tsd.min[matched]<- TminTmax$Tsd.min[match1[matched]]
+phy$Tmad.min[matched]<- TminTmax$Tmad.min[match1[matched]]
 
 phy$Tmax[matched]<- TminTmax$Tmax[match1[matched]]
 phy$Tmedian.max[matched]<- TminTmax$Tmedian.max[match1[matched]]
 phy$T5q.max[matched]<- TminTmax$T5q.max[match1[matched]]
 phy$T10q.max[matched]<- TminTmax$T10q.max[match1[matched]]
 phy$Tsd.max[matched]<- TminTmax$Tsd.max[match1[matched]]
+phy$Tmad.max[matched]<- TminTmax$Tmad.max[match1[matched]]
 
 phy$UpperLat[matched]<- TminTmax$UpperLat[match1[matched]]
 phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]
@@ -58,12 +60,14 @@ phy$Tmedian.min[matched]<- TminTmax$Tmedian.min[match1[matched]]
 phy$T5q.min[matched]<- TminTmax$T5q.min[match1[matched]]
 phy$T10q.min[matched]<- TminTmax$T10q.min[match1[matched]]
 phy$Tsd.min[matched]<- TminTmax$Tsd.min[match1[matched]]
+phy$Tmad.min[matched]<- TminTmax$Tmad.min[match1[matched]]
 
 phy$Tmax[matched]<- TminTmax$Tmax[match1[matched]]
 phy$Tmedian.max[matched]<- TminTmax$Tmedian.max[match1[matched]]
 phy$T5q.max[matched]<- TminTmax$T5q.max[match1[matched]]
 phy$T10q.max[matched]<- TminTmax$T10q.max[match1[matched]]
 phy$Tsd.max[matched]<- TminTmax$Tsd.max[match1[matched]]
+phy$Tmad.max[matched]<- TminTmax$Tmad.max[match1[matched]]
 
 phy$UpperLat[matched]<- TminTmax$UpperLat[match1[matched]]
 phy$LowerLat[matched]<- TminTmax$LowerLat[match1[matched]]

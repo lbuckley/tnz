@@ -102,7 +102,7 @@ pall$w.shift= pall$wf - pall$wp
 pall$wmed.shift= pall$wf.med - pall$wp.med 
 
 dl=ggplot(pall, aes(cmed.shift, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
 
 #-----------------
 #RANGE SIZE CHANGE
@@ -116,6 +116,10 @@ da=ggplot(rall, aes(area.shift, fill = Taxa)) +
 
 plot(da)
 
+#-----------
+#Stats
+summary(pall[which(pall$Taxa=="Mammal"),"cmed.shift"])
+summary(pall[which(pall$Taxa=="Bird"),"cmed.shift"])
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #MAMMALS
@@ -201,7 +205,7 @@ library(gridBase)
 ##FIG 4
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
 pdf("Fig4.pdf", height=8, width=8)
-par(mfrow=c(2,2), cex=1, mar=c(3, 3, 1, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", tck=0.02, mgp=c(1, 0, 0))
+par(mfrow=c(2,2), cex=1.1, mar=c(3, 3, 1, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", tck=0.02, mgp=c(1, 0, 0))
 
 #change directory back for shapefiles
 setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))

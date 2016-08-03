@@ -55,6 +55,16 @@ inds= which(phy$Tuc> phy$Tmax.use)
 phy[inds,"MetElev.hot"]=NA
 phy[inds,"Tamb_upSS"]=NA
 
+#---------------------------
+#Ns
+dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope)),])
+dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope.hot)),])
+dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope.hot | phy$scope)),])
+
+dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope)),])
+dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope.hot)),])
+dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope.hot | phy$scope)),])
+
 #=======================================
 #ANALYSIS
 
@@ -79,8 +89,12 @@ peak.b=db$x[which.max(db$y)]
 peak.m=dm$x[which.max(dm$y)]
 
 #medians, mean
-median(scopes.b); mean(scopes.b)
-median(scopes.m); mean(scopes.m)
+median(scopes.b); mean(scopes.b);sd(scopes.b)
+median(scopes.m); mean(scopes.m);sd(scopes.m)
+# se
+se=function(x) sd(x)/sqrt(sum(!is.na(x)))
+se(scopes.m)
+se(scopes.b)
 
 ##try median
 #peak.b= median(scopes.b)
@@ -98,8 +112,8 @@ peak.bh=dbh$x[which.max(dbh$y)]
 peak.mh=dmh$x[which.max(dmh$y)]
 
 #medians, mean
-median(scopes.b); mean(scopes.b)
-median(scopes.m); mean(scopes.m)
+median(scopes.b); mean(scopes.b);sd(scopes.b)
+median(scopes.m); mean(scopes.m);sd(scopes.m)
 
 ##try median
 #peak.bh= median(scopes.b)
@@ -143,10 +157,10 @@ phy=phy[-which(phy$scope>100),]
 
 #DENSITY PLOTS
 dl=ggplot(phy, aes(scope, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
 
 du=  ggplot(phy, aes(scope.hot, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Factorial scope at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
 
 #---------------------
 #Plot TRAITS
@@ -158,14 +172,14 @@ xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
 p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()
+pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
 #+ facet_wrap(~Taxa)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
 p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g)))+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()
+pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
 
 #----------
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
@@ -189,7 +203,7 @@ bird= phy[which(phy$Taxa=="Bird"),]
 mamm= phy[which(phy$Taxa=="Mammal"),]
 
 #bird
-mod1= lm(bird$scope~ log(bird$Mass_g) + bird$diet + bird$Nocturnal +bird$torpor)
+mod1= lm(bird$scope~ log(bird$Mass_g) + bird$diet + bird$Nocturnal)
 mod1= lm(bird$scope.hot~ log(bird$Mass_g) + bird$diet + bird$Nocturnal +bird$torpor)
 summary(mod1)
 
@@ -550,30 +564,61 @@ write.csv(phy, "MRelevation_wTraits.csv")
 
 #=========================================================
 #PLOT RELATIONSHIP BETWEEN TEMPERATURE METRICS
+setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
+pdf("FigTemp.pdf", height=10, width=12)
+
+par(mfrow=c(1,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.6, mgp=c(2, 1, 0))
 
 #MIN
-plot(phy$T10q.min, phy$T5q.min, type="p")
-points(phy$T10q.min, phy$Tmin, type="p", col="blue")
-points(phy$T10q.min, phy$Tmedian.min, type="p", col="red")
-abline(a=0,b=1, lwd=2)
+plot(mammals$T10q.min, mammals$T5q.min, type="p", xlab="Tmin 10th quantile  (°C)", ylab="Tmin metric (°C)")
+points(mammals$T10q.min, mammals$Tmin, type="p", col="blue")
+points(mammals$T10q.min, mammals$Tmedian.min, type="p", col="red")
+points(mammals$T10q.min, mammals$T5q.min, type="p")
 
-plot(phy$Tmin, phy$Tmedian.min, type="p")
+points(birds$T10q.min, birds$Tmin, type="p", col="blue", pch="*")
+points(birds$T10q.min, birds$Tmedian.min, type="p", col="red", pch="*")
+points(birds$T10q.min, birds$T5q.min, type="p", pch="*")
+
 abline(a=0,b=1, lwd=2)
+legend("topleft",pch=1, legend=c("minimum","5th quantile","median"), col=c("blue","black","red"),bty="n")
+
+#plot(phy$Tmin, phy$Tmedian.min, type="p")
+#abline(a=0,b=1, lwd=2)
 
 summary(phy$Tmedian.min-phy$Tmin)
-
 summary(phy$Tsd.min)
 
 #------------------------
 #MAX
-plot(phy$T10q.max, phy$T5q.max, type="p")
-points(phy$T10q.max, phy$Tmax, type="p", col="blue")
-points(phy$T10q.max, phy$Tmedian.max, type="p", col="red")
-abline(a=0,b=1, lwd=2)
+plot(mammals$T10q.max, mammals$T5q.max, type="p", xlab="Tmax 90th quantile  (°C)", ylab="Tmax metric (°C)")
+points(mammals$T10q.max, mammals$Tmax, type="p", col="red")
+points(mammals$T10q.max, mammals$Tmedian.max, type="p", col="blue")
+points(mammals$T10q.max, mammals$T5q.max, type="p")
 
-plot(phy$Tmax, phy$Tmedian.max, type="p")
+points(birds$T10q.max, birds$Tmax, type="p", col="red", pch="*")
+points(birds$T10q.max, birds$Tmedian.max, type="p", col="blue", pch="*")
+points(birds$T10q.max, birds$T5q.max, type="p", pch="*")
+
 abline(a=0,b=1, lwd=2)
+legend("topleft",pch=1, legend=c("median","95th quantile","maximum"), col=c("blue","black","red"),bty="n")
+
+#plot(phy$Tmax, phy$Tmedian.max, type="p")
+#abline(a=0,b=1, lwd=2)
 
 summary(phy$Tmedian.max-phy$Tmax)
 
 summary(phy$Tsd.max)
+
+dev.off()
+
+#----------------------
+#TEMP ISOCLINEs
+summary(mammals$Tsd.min)
+summary(mammals$Tmad.min)
+summary(birds$Tsd.min)
+summary(birds$Tmad.min)
+
+summary(mammals$Tsd.max)
+summary(mammals$Tmad.max)
+summary(birds$Tsd.max)
+summary(birds$Tmad.max)
