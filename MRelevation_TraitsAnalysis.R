@@ -29,8 +29,9 @@ aggregate(phy[,c("MetElev")], list(phy$Taxa), FUN=count)
 
 #---------------------
 #specify Tmin and Tmax
-phy$Tmin.use=phy$T10q.min
-phy$Tmax.use=phy$T10q.max
+phy$Tmin.use=phy$Tmedian.min
+phy$Tmax.use=phy$Tmedian.max
+#TRY MEDIAN
 
 plot(phy$Tlc, phy$Tmin.use)
 abline(a=0, b=1)
@@ -622,3 +623,69 @@ summary(mammals$Tsd.max)
 summary(mammals$Tmad.max)
 summary(birds$Tsd.max)
 summary(birds$Tmad.max)
+
+#--------------------------------------
+#SENSITIVITY PLOTs
+
+#SCOPE BY MASS
+p <- ggplot(data = phy, aes(x = log(Mass_g), y = log(scope), shape=Taxa, color=as.factor(torpor) ))+ scale_shape_manual(values = c(1,19))
+            
+pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
+plot(pu)
+
+#-------------------
+#Randomize Temp
+library(Rmisc)
+
+MEmed= rep(NA,1000)
+
+for(i in 1:1000){
+  phy1=phy[phy$Taxa=="Mammal",]
+  Trand= sample(phy1$Tmedian.min)
+  NBMR= abs(phy$Tlc- Trand)*phy1$Cmin +phy1$BMR_mlO2_h
+  MErand<- NBMR / phy1$BMR_mlO2_h
+  MEmed[i]= median(MErand)
+  CI(MErand, ci=0.95)
+  hist(MErand)
+}
+CI(MEmed, ci=0.95)
+hist(MEmed)
+
+dr= density(phy1$T10q.min)
+dr= density(phy1$Tmedian.min)
+plot(dr )
+
+#upper     mean    lower 
+#3.982882 3.976690 3.970497
+
+#NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+#phy$MetElev.hot<- NBMR / phy$BMR_mlO2_h
+
+MEmed= rep(NA,1000)
+
+for(i in 1:1000){
+  Trand= sample(phy$T10q.max)
+  NBMR= abs(phy$Tlc- Trand)*phy$Cmin +phy$BMR_mlO2_h
+  MErand<- NBMR / phy$BMR_mlO2_h
+  MEmed[i]= median(MErand)
+}
+CI(MEmed, ci=0.95)
+
+dr= density(phy1$T10q.max)
+plot(dr )
+
+#-------------------
+#Analyze isotherms
+#Temp to scange MR_CRB by 10%
+
+#Temp change result in changing MR
+fact=0.2
+phy$Tdif= -fact*(phy$T10q.min -phy$Tlc - phy$BMR_mlO2_h / phy$Cmin)
+hist(phy$Tdif)
+
+plot(phy$Tsd.min, phy$Tdif, xlim=range(0,20), ylim=range(0,20) )
+abline(a=0,b=1)
+
+#MR change at Tsd
+phy$MRfact= -phy$Tsd.min/(phy$T10q.min -phy$Tlc - phy$BMR_mlO2_h / phy$Cmin)
+phy$MRfact_max= -phy$Tsd.max/(phy$T10q.max -phy$Tuc - phy$BMR_mlO2_h / phy$Cmin)
