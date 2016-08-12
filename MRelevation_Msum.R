@@ -53,8 +53,10 @@ phy$BMR_mlO2_h_Msum[matched]<- mammMsum2$BMR__mlO2_h[match1[matched]]
 
 #----------------------------
 #Proportion Msum at range edge
-Tmin= phy$T10q.min
-Tmax= phy$T10q.max
+Tmin= phy$Tmedian.min
+Tmax= phy$Tmedian.max
+#Tmin= phy$T10q.min
+#Tmax= phy$T10q.max
 
 NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
 phy$pMsum<- phy$Msum_mlO2_h / NBMR
@@ -62,14 +64,15 @@ phy$pMsum<- phy$Msum_mlO2_h / NBMR
 NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
 phy$pMsum.hot<- phy$Msum_mlO2_h / NBMR
 
-#use peak of 1: median=0.95, mean=1.0
+#use peak of 1: median=1.1, mean=1.2
 median(phy$pMsum, na.rm=TRUE)
 mean(phy$pMsum, na.rm=TRUE)
+MsumE= 1
 
 sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
 
-phy$Tamb_low_Msum= phy$Tlc- (phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
+phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
 
 phymsum= phy[!is.na(phy$pMsum),]
 #--------------

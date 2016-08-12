@@ -43,8 +43,8 @@ phy=read.csv("MRelevation_all.csv")
 #Calculate MR elevation
 
 #TRY MEDIAN
-Tmin= phy$T10q.min
-Tmax= phy$T10q.max
+Tmin= phy$Tmedian.min
+Tmax= phy$Tmedian.max
 
 #Calculate MR elevation
 NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h

@@ -35,6 +35,8 @@ phy$Tmax.use=phy$Tmedian.max
 
 plot(phy$Tlc, phy$Tmin.use)
 abline(a=0, b=1)
+plot(phy$Tuc, phy$Tmax.use)
+abline(a=0, b=1)
 
 #Restrict to species with Tmin <Tlc
 phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
@@ -266,7 +268,8 @@ setwd(paste(mydir,"MRelevation\\Data\\Phylo\\", sep=""))
 speTree1<-read.nexus("SFritz.tre")
 
 #birds
-tree_bird<-read.nexus("my_tree.tre")
+BirdTree<-read.nexus("my_tree.tre")
+#tree_bird<-read.nexus("my_tree.tre")
 #tree_bird2<-read.nexus("Jetz_et_al.tre")
 
 #matching
@@ -571,14 +574,14 @@ pdf("FigTemp.pdf", height=10, width=12)
 par(mfrow=c(1,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.6, mgp=c(2, 1, 0))
 
 #MIN
-plot(mammals$T10q.min, mammals$T5q.min, type="p", xlab="Tmin 10th quantile  (°C)", ylab="Tmin metric (°C)")
-points(mammals$T10q.min, mammals$Tmin, type="p", col="blue")
-points(mammals$T10q.min, mammals$Tmedian.min, type="p", col="red")
-points(mammals$T10q.min, mammals$T5q.min, type="p")
+plot(mammals$Tmedian.min, mammals$T5q.min, type="p", xlab="Tmin 10th quantile  (°C)", ylab="Tmin metric (°C)")
+points(mammals$Tmedian.min, mammals$Tmin, type="p", col="blue")
+points(mammals$median.min, mammals$T10q.min, type="p", col="red")
+points(mammals$Tmedian.min, mammals$T5q.min, type="p")
 
-points(birds$T10q.min, birds$Tmin, type="p", col="blue", pch="*")
-points(birds$T10q.min, birds$Tmedian.min, type="p", col="red", pch="*")
-points(birds$T10q.min, birds$T5q.min, type="p", pch="*")
+points(birds$Tmedian.min, birds$Tmin, type="p", col="blue", pch="*")
+points(birds$Tmedian.min, birds$T10q.min, type="p", col="red", pch="*")
+points(birds$Tmedian.min, birds$T5q.min, type="p", pch="*")
 
 abline(a=0,b=1, lwd=2)
 legend("topleft",pch=1, legend=c("minimum","5th quantile","median"), col=c("blue","black","red"),bty="n")
@@ -591,14 +594,14 @@ summary(phy$Tsd.min)
 
 #------------------------
 #MAX
-plot(mammals$T10q.max, mammals$T5q.max, type="p", xlab="Tmax 90th quantile  (°C)", ylab="Tmax metric (°C)")
-points(mammals$T10q.max, mammals$Tmax, type="p", col="red")
-points(mammals$T10q.max, mammals$Tmedian.max, type="p", col="blue")
-points(mammals$T10q.max, mammals$T5q.max, type="p")
+plot(mammals$Tmedian.max, mammals$T5q.max, type="p", xlab="Tmax 90th quantile  (°C)", ylab="Tmax metric (°C)")
+points(mammals$Tmedian.max, mammals$Tmax, type="p", col="red")
+points(mammals$Tmedian.max, mammals$T10q.max, type="p", col="blue")
+points(mammals$Tmedian.max, mammals$T5q.max, type="p")
 
-points(birds$T10q.max, birds$Tmax, type="p", col="red", pch="*")
-points(birds$T10q.max, birds$Tmedian.max, type="p", col="blue", pch="*")
-points(birds$T10q.max, birds$T5q.max, type="p", pch="*")
+points(birds$Tmedian.max, birds$Tmax, type="p", col="red", pch="*")
+points(birds$Tmedian.max, birds$T10q.max, type="p", col="blue", pch="*")
+points(birds$Tmedian.max, birds$T5q.max, type="p", pch="*")
 
 abline(a=0,b=1, lwd=2)
 legend("topleft",pch=1, legend=c("median","95th quantile","maximum"), col=c("blue","black","red"),bty="n")
@@ -651,7 +654,7 @@ for(i in 1:1000){
 CI(MEmed, ci=0.95)
 hist(MEmed)
 
-dr= density(phy1$T10q.min)
+dr= density(phy1$T10q.min) 
 dr= density(phy1$Tmedian.min)
 plot(dr )
 
