@@ -643,18 +643,27 @@ plot(pu)
 library(Rmisc)
 
 MEmed= rep(NA,1000)
+MEmean = rep(NA,1000)
 
 for(i in 1:1000){
-  phy1=phy[phy$Taxa=="Mammal",]
+  #phy1=phy[phy$Taxa=="Mammal",]
+  phy1=phy[phy$Taxa=="Bird",]
   Trand= sample(phy1$Tmedian.min)
   NBMR= abs(phy$Tlc- Trand)*phy1$Cmin +phy1$BMR_mlO2_h
   MErand<- NBMR / phy1$BMR_mlO2_h
   MEmed[i]= median(MErand)
+  MEmean[i]= mean(MErand)
   CI(MErand, ci=0.95)
-  hist(MErand)
+  #hist(MErand)
 }
 CI(MEmed, ci=0.95)
+CI(MEmean, ci=0.95)
+
 hist(MEmed)
+hist(MEmean)
+
+mean(MEmed)
+sd(MEmed)
 
 dr= density(phy1$T10q.min) 
 dr= density(phy1$Tmedian.min)
@@ -692,5 +701,15 @@ plot(phy$Tsd.min, phy$Tdif, xlim=range(0,20), ylim=range(0,20) )
 abline(a=0,b=1)
 
 #MR change at Tsd
-phy$MRfact= -phy$Tsd.min/(phy$T10q.min -phy$Tlc - phy$BMR_mlO2_h / phy$Cmin)
-phy$MRfact_max= -phy$Tsd.max/(phy$T10q.max -phy$Tuc - phy$BMR_mlO2_h / phy$Cmin)
+phy$MRfact= -phy$Tsd.min/(phy$Tmedian.min -phy$Tlc - phy$BMR_mlO2_h / phy$Cmin)
+phy$MRfact_max= -phy$Tsd.max/(phy$Tmedian.max - phy$Tuc - phy$BMR_mlO2_h / phy$Cmin)
+
+phy1=phy[phy$Taxa=="Mammal",]
+phy1=phy[phy$Taxa=="Bird",]
+
+summary(phy1$MRfact)
+summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
+
+sd(phy1$MRfact)
+sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
+
