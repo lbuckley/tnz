@@ -209,6 +209,7 @@ mamm= phy[which(phy$Taxa=="Mammal"),]
 mod1= lm(bird$scope~ log(bird$Mass_g) + bird$diet + bird$Nocturnal)
 mod1= lm(bird$scope.hot~ log(bird$Mass_g) + bird$diet + bird$Nocturnal +bird$torpor)
 summary(mod1)
+AIC(mod1)
 
 #mammal
 mod1= lm(mamm$scope~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal + mamm$torpor)
@@ -216,6 +217,7 @@ mod1= lm(mamm$scope.hot~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal +mamm$tor
 
 #mod1= lm(mamm$scope~ log(mamm$Mass_g) +mamm$diet + mamm$Nocturnal + mamm$torpor +log(mamm$Mass_g):mamm$diet +log(mamm$Mass_g):mamm$Nocturnal +log(mamm$Mass_g):mamm$torpor+mamm$diet:mamm$Nocturnal +mamm$diet:mamm$torpor + mamm$Nocturnal:mamm$torpor)
 summary(mod1)
+AIC(mod1)
 
 #ORDER, RANGE AREA NOT PREDICTIVE
 
@@ -549,7 +551,7 @@ pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corBrownia
 pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
 
 pglsModel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
-
+summary(pglsModel)
 #------------
 #Fit lambda simultaneous
 fitPagel <- gls(scope ~ log(Mass_g) + diet+ Nocturnal, correlation=corPagel(value=0.8, phy=MammTree.l), data=mamm.l)
@@ -574,7 +576,7 @@ pdf("FigTemp.pdf", height=10, width=12)
 par(mfrow=c(1,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.6, mgp=c(2, 1, 0))
 
 #MIN
-plot(mammals$Tmedian.min, mammals$T5q.min, type="p", xlab="Tmin 10th quantile  (°C)", ylab="Tmin metric (°C)")
+plot(mammals$Tmedian.min, mammals$T5q.min, type="p", xlab="Tmin median (°C)", ylab="Tmin metric (°C)")
 points(mammals$Tmedian.min, mammals$Tmin, type="p", col="blue")
 points(mammals$median.min, mammals$T10q.min, type="p", col="red")
 points(mammals$Tmedian.min, mammals$T5q.min, type="p")
@@ -584,7 +586,7 @@ points(birds$Tmedian.min, birds$T10q.min, type="p", col="red", pch="*")
 points(birds$Tmedian.min, birds$T5q.min, type="p", pch="*")
 
 abline(a=0,b=1, lwd=2)
-legend("topleft",pch=1, legend=c("minimum","5th quantile","median"), col=c("blue","black","red"),bty="n")
+legend("topleft",pch=1, legend=c("minimum","5th quantile","10th quantile"), col=c("blue","black","red"),bty="n")
 
 #plot(phy$Tmin, phy$Tmedian.min, type="p")
 #abline(a=0,b=1, lwd=2)
@@ -594,7 +596,7 @@ summary(phy$Tsd.min)
 
 #------------------------
 #MAX
-plot(mammals$Tmedian.max, mammals$T5q.max, type="p", xlab="Tmax 90th quantile  (°C)", ylab="Tmax metric (°C)")
+plot(mammals$Tmedian.max, mammals$T5q.max, type="p", xlab="Tmax median  (°C)", ylab="Tmax metric (°C)")
 points(mammals$Tmedian.max, mammals$Tmax, type="p", col="red")
 points(mammals$Tmedian.max, mammals$T10q.max, type="p", col="blue")
 points(mammals$Tmedian.max, mammals$T5q.max, type="p")
@@ -604,7 +606,7 @@ points(birds$Tmedian.max, birds$T10q.max, type="p", col="blue", pch="*")
 points(birds$Tmedian.max, birds$T5q.max, type="p", pch="*")
 
 abline(a=0,b=1, lwd=2)
-legend("topleft",pch=1, legend=c("median","95th quantile","maximum"), col=c("blue","black","red"),bty="n")
+legend("topleft",pch=1, legend=c("90th quantile","95th quantile","maximum"), col=c("blue","black","red"),bty="n")
 
 #plot(phy$Tmax, phy$Tmedian.max, type="p")
 #abline(a=0,b=1, lwd=2)

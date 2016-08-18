@@ -104,6 +104,8 @@ pall$wmed.shift= pall$wf.med - pall$wp.med
 dl=ggplot(pall, aes(cmed.shift, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
 
+#hist(pall$cmed.shift)
+
 #-----------------
 #RANGE SIZE CHANGE
 rall= pall[which(pall$predC==1 & pall$predW==1),]
@@ -118,8 +120,16 @@ plot(da)
 
 #-----------
 #Stats
-summary(pall[which(pall$Taxa=="Mammal"),"cmed.shift"])
-summary(pall[which(pall$Taxa=="Bird"),"cmed.shift"])
+mshift=(pall[which(pall$Taxa=="Mammal"),"cmed.shift"])
+bshift=(pall[which(pall$Taxa=="Bird"),"cmed.shift"])
+
+mshift[!is.finite(mshift)]=NA
+bshift[!is.finite(bshift)]=NA
+
+mean(mshift,na.rm=TRUE)
+mean(bshift,na.rm=TRUE)
+median(mshift,na.rm=TRUE)
+median(bshift,na.rm=TRUE)
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #MAMMALS
@@ -212,7 +222,11 @@ par(mfrow=c(2,2), cex=1.1, mar=c(3, 3, 1, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", 
 #change directory back for shapefiles
 setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 
-speci= rev(which(phy$Species %in% c("Spermophilus beecheyi","Microtus montanus","Myodes gapperi") ))
+#speci= rev(which(phy$Species %in% c("Spermophilus beecheyi","Microtus montanus","Myodes gapperi") ))
+speci= rev(which(phy$Species %in% c("Tamiasciurus hudsonicus", "Neotoma lepida","Peromyscus californicus" ) ))
+#Tamiasciurus hudsonicus, Red Squirrel 
+#Neotoma lepida, desert woodrat
+#Peromyscus californicus, California Mouse
 
 #LOOP SPECIES
 for(spec in speci ){
