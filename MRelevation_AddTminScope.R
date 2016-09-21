@@ -1,4 +1,5 @@
  ## set directory for data files
+## RUN AFTER ASSEMBLIG DATA _AssembleDataTraits
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
@@ -118,7 +119,8 @@ inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
 phy$Cconstrained[inds]= phy$Sconstrained[inds] 
 phy$Wconstrained[inds]= phy$Nconstrained[inds]
 
-#crosses latitude ## BETTER WAY?
+#crosses latitude 
+#Change to both cold boundaries, consider constrained if either constraint
 inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
 con= phy$Sconstrained + phy$Nconstrained
 con[which(con==2)]=1

@@ -1,3 +1,5 @@
+##RUN AFTER EXTRACT TMIN SCOPE
+
 library(geiger)
 library(plyr)
 library(caper)
@@ -16,7 +18,7 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
 #phy=read.csv("MRelevation_allMASTER.csv")
 
 #=======================================
@@ -57,16 +59,6 @@ phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 inds= which(phy$Tuc> phy$Tmax.use)
 phy[inds,"MetElev.hot"]=NA
 phy[inds,"Tamb_upSS"]=NA
-
-#---------------------------
-#Ns
-dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope)),])
-dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope.hot)),])
-dim(phy[which(phy$Taxa=="Mammal" & !is.na(phy$scope.hot | phy$scope)),])
-
-dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope)),])
-dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope.hot)),])
-dim(phy[which(phy$Taxa=="Bird" & !is.na(phy$scope.hot | phy$scope)),])
 
 #=======================================
 #ANALYSIS
@@ -712,4 +704,5 @@ summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 
 sd(phy1$MRfact)
 sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
+
 

@@ -16,7 +16,6 @@ Tall= rbind(Tbird, Tmammal)
 
 #READ PHYS DATA
 phy= read.csv("Khaliq_etal_commented_ProcB.csv")
-phy$UCT...C.=as.numeric(as.character(tnz$UCT...C.))
 phy$gen_spec= paste(phy$Genus,"_",phy$Species,sep="")
 names(phy)[6:9]= c("Mass_g","Tlc","Tuc","TNZ")
 
@@ -369,6 +368,9 @@ matched= which(!is.na(match1))
 
 phy$Nconstrained[matched]= const$Nconstrained[match1[matched]]
 phy$Sconstrained[matched]= const$Sconstrained[match1[matched]]
+
+phy$Species[matched]
+const$gen_spec[match1[matched]]
 
 #restrict to species with at least one unconstrained edge
 phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
