@@ -14,26 +14,50 @@ library(MuMIn) #for model averaging
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
-## READ DATA
+#define functions
+count=function(x) length(na.omit(x))
+
+#=======================================
+## READ DATASET
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRexpansibility_Buckleyetal.csv")
-#phy=read.csv("MRelevation_allMASTER.csv")
 
-#=======================================
-#CHECK DATA
+#========================================
+#recode range constraints
+#C=1: cold constraint; W=1: warm constraint
 
-#check data quality
-count=function(x) length(na.omit(x))
+phy$Cconstrained= NA 
+phy$Wconstrained= NA
+#N
+inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
+phy$Cconstrained[inds]= phy$Nconstrained[inds] 
+phy$Wconstrained[inds]= phy$Sconstrained[inds]
 
-aggregate(phy[,c("MetElev")], list(phy$Taxa), FUN=count)
+#S
+inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
+phy$Cconstrained[inds]= phy$Sconstrained[inds] 
+phy$Wconstrained[inds]= phy$Nconstrained[inds]
 
-#---------------------
-#specify Tmin and Tmax
+#crosses latitude 
+#Change to both cold boundaries, consider constrained if either constraint
+inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
+con= phy$Sconstrained + phy$Nconstrained
+con[which(con==2)]=1
+
+phy$Cconstrained[inds]= con[inds] 
+phy$Wconstrained[inds]= 1
+
+#======================================
+#ADD METABOLIC CONSTRAINTS
+
+#Calculate CMIN at upper TNZ
+phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
+
+#specify temperature metrics (Tmin and Tmax) to use
 phy$Tmin.use=phy$Tmedian.min
 phy$Tmax.use=phy$Tmedian.max
-#TRY MEDIAN
 
 plot(phy$Tlc, phy$Tmin.use)
 abline(a=0, b=1)
@@ -44,13 +68,16 @@ abline(a=0, b=1)
 phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
 
 #-------------------------
-#Update scope and T ambient
+#CALCULATE METABOLIC EXPANSIBILITY (MetElev)
 NBMR= abs(phy$Tlc- phy$Tmin.use)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev= NBMR / phy$BMR_mlO2_h
 
 NBMR= abs(phy$Tuc - phy$Tmax.use)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev.hot= NBMR / phy$BMR_mlO2_h
 
+#-------------------------
+## PREDICT PHYSIOLOGICAL TEMPERATURE LIMITS
+## CALCULATE SPECIES SPECIFIC Tamb
 phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
 
 phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
@@ -63,6 +90,7 @@ phy[inds,"Tamb_upSS"]=NA
 #=======================================
 #ANALYSIS
 
+#change variable names
 phy$scope= phy$MetElev
 phy$scope.hot= phy$MetElev.hot
 
@@ -91,10 +119,6 @@ se=function(x) sd(x)/sqrt(sum(!is.na(x)))
 se(scopes.m)
 se(scopes.b)
 
-##try median
-#peak.b= median(scopes.b)
-#peak.m= median(scopes.m)
-
 #-----------
 ## HOT SCOPE
 scopes.b= na.omit(phy$scope.hot[which(phy$Taxa=="Bird")])
@@ -110,15 +134,9 @@ peak.mh=dmh$x[which.max(dmh$y)]
 median(scopes.b); mean(scopes.b);sd(scopes.b)
 median(scopes.m); mean(scopes.m);sd(scopes.m)
 
-##try median
-#peak.bh= median(scopes.b)
-#peak.mh= median(scopes.m)
-
 #------------------------------
 #TEMP PLOTS
-
 # TAMB= TCRIT - (FACTOR-1)BMR/COND
-#Use peak values
 
 #Add temp prediction
 phy$Tamb_low=NA
@@ -148,6 +166,8 @@ mammals= phy[which(phy$Taxa=="Mammal"),]
 phy=phy[-which(phy$scope>100),]
 
 #=============================
+# PLOTS
+
 #FIGURE 1: PLOT SCOPE AND RESIDUALS
 
 #DENSITY PLOTS
@@ -192,7 +212,7 @@ print(pu,vp=vplayout(2,2))
 
 dev.off()
 
-#-----------------------------------
+#=======================================
 #Models
 bird= phy[which(phy$Taxa=="Bird"),]
 mamm= phy[which(phy$Taxa=="Mammal"),]
@@ -207,11 +227,8 @@ AIC(mod1)
 mod1= lm(mamm$scope~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal + mamm$torpor)
 mod1= lm(mamm$scope.hot~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal +mamm$torpor)
 
-#mod1= lm(mamm$scope~ log(mamm$Mass_g) +mamm$diet + mamm$Nocturnal + mamm$torpor +log(mamm$Mass_g):mamm$diet +log(mamm$Mass_g):mamm$Nocturnal +log(mamm$Mass_g):mamm$torpor+mamm$diet:mamm$Nocturnal +mamm$diet:mamm$torpor + mamm$Nocturnal:mamm$torpor)
 summary(mod1)
 AIC(mod1)
-
-#ORDER, RANGE AREA NOT PREDICTIVE
 
 #residual plots
 crPlots(mod1)
@@ -258,13 +275,10 @@ anova(mod1)
 setwd(paste(mydir,"MRelevation\\Data\\Phylo\\", sep=""))
 
 #mammals
-# if you want to use a consensus tree
 speTree1<-read.nexus("SFritz.tre")
 
 #birds
 BirdTree<-read.nexus("my_tree.tre")
-#tree_bird<-read.nexus("my_tree.tre")
-#tree_bird2<-read.nexus("Jetz_et_al.tre")
 
 #matching
 ## CHANGE TO ACCOUNT FOR SYNONYMS
@@ -295,16 +309,8 @@ bird.u <- bird.u[match1,]
 rownames(bird.u)= bird.u$gen_spec
 
 #-----------------------------
-#FIG 2: MAMMAL PHYLOGENY
+#MAMMAL PHYLOGENY PLOT
 #Conservatism
-#PLOT: http://lukejharmon.github.io/ilhabela/instruction/2015/07/05/plotting-methods/
-
-## ADD BARS
-#obj<-contMap(anole.tree,exp(svl),plot=FALSE)
-#plotTree.wBars(obj$tree,exp(svl),method="plotSimmap",
-#               tip.labels=TRUE,fsize=0.7,colors=obj$cols,type="fan",scale=0.002)
-#add.color.bar(1.0,obj$cols,title="trait value",lims=obj$lims,prompt=FALSE,
-#              x=0.9*par()$usr[1],y=0.9*par()$usr[3])
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
 pdf("FigSphy.pdf", height=8, width=4)
@@ -325,9 +331,6 @@ obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off
 me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"Mass_g"])
 names(me)= mamm.l$gen_spec
 obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
-
-##TORPOP
-#frame()
 
 #-------------
 #birds
@@ -361,10 +364,10 @@ matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
 MammTree<-drop.tip(speTree1,speTree1$tip.label[not.matched])
 
-match1= match(tree_bird$tip.label, bird$gen_spec)
+match1= match(BirdTree$tip.label, bird$gen_spec)
 matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
-BirdTree<-drop.tip(tree_bird,tree_bird$tip.label[not.matched])
+BirdTree<-drop.tip(BirdTree,BirdTree$tip.label[not.matched])
 
 #---------------------------
 bird$gen_spec= as.character(bird$gen_spec)
