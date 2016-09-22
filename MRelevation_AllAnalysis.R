@@ -25,22 +25,23 @@ setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
 #========================================
-#recode range constraints
+#Recode North / South range constraints to Cold / Warm boundaries
 #C=1: cold constraint; W=1: warm constraint
 
 phy$Cconstrained= NA 
 phy$Wconstrained= NA
-#N
+
+#Northern hemisphere
 inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
 phy$Cconstrained[inds]= phy$Nconstrained[inds] 
 phy$Wconstrained[inds]= phy$Sconstrained[inds]
 
-#S
+#Southern hemisphere
 inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
 phy$Cconstrained[inds]= phy$Sconstrained[inds] 
 phy$Wconstrained[inds]= phy$Nconstrained[inds]
 
-#crosses latitude 
+#Crosses hemispheres 
 #Change to both cold boundaries, consider constrained if either constraint
 inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
 con= phy$Sconstrained + phy$Nconstrained
@@ -52,7 +53,7 @@ phy$Wconstrained[inds]= 1
 #======================================
 #ADD METABOLIC CONSTRAINTS
 
-#Calculate CMIN at upper TNZ
+#Calculate conductance (CMIN)
 phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
 
 #specify temperature metrics (Tmin and Tmax) to use
@@ -64,25 +65,31 @@ abline(a=0, b=1)
 plot(phy$Tuc, phy$Tmax.use)
 abline(a=0, b=1)
 
-#Restrict to species with Tmin <Tlc
+#Restrict to species with Tmin below the lower extent of the thermoneutral zone (Tmin <Tlc)
 phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
 
 #-------------------------
 #CALCULATE METABOLIC EXPANSIBILITY (MetElev)
+
+#Cold boundary
 NBMR= abs(phy$Tlc- phy$Tmin.use)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev= NBMR / phy$BMR_mlO2_h
 
+#Warm boundary
 NBMR= abs(phy$Tuc - phy$Tmax.use)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev.hot= NBMR / phy$BMR_mlO2_h
 
 #-------------------------
 ## PREDICT PHYSIOLOGICAL TEMPERATURE LIMITS
-## CALCULATE SPECIES SPECIFIC Tamb
+#Species specific environmental temperature than we predict the species can tolerate 
+
+#Cold boundary
 phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
 
+#Warm boundary
 phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
 
-#change species with Tuc>Tmax to NA
+#change species with Tmax cooler than the upper end of thermal neutral zone (Tuc>Tmax) to NA
 inds= which(phy$Tuc> phy$Tmax.use)
 phy[inds,"MetElev.hot"]=NA
 phy[inds,"Tamb_upSS"]=NA
@@ -90,17 +97,18 @@ phy[inds,"Tamb_upSS"]=NA
 #=======================================
 #ANALYSIS
 
-#change variable names
+#change variable name for metabolic expansibility
 phy$scope= phy$MetElev
 phy$scope.hot= phy$MetElev.hot
 
-#remove constrained range boundaries
+#remove constrained range boundaries from analysis
 phy$scope[which(phy$Cconstrained==1)] = NA
 phy$scope.hot[which(phy$Wconstrained==1)] = NA
 # sum(!is.na(phy$scope))
 # sum(!is.na(phy$scope.hot))
 
-#ME density
+#Distribution of metabolic expanisbility at cold range boundary
+#Plot density of metaboliuc expansibility
 #NEED TO CHECK SCOPES >10 # & phy$scope<10
 scopes.b= na.omit(phy$scope[which(phy$Taxa=="Bird")])
 scopes.m= na.omit(phy$scope[which(phy$Taxa=="Mammal")])
@@ -108,10 +116,11 @@ scopes.m= na.omit(phy$scope[which(phy$Taxa=="Mammal")])
 db= density(scopes.b)
 dm= density(scopes.m)
 
+#find peak of density distribution
 peak.b=db$x[which.max(db$y)]
 peak.m=dm$x[which.max(dm$y)]
 
-#medians, mean
+#calculate medians, mean
 median(scopes.b); mean(scopes.b);sd(scopes.b)
 median(scopes.m); mean(scopes.m);sd(scopes.m)
 # se
@@ -120,25 +129,27 @@ se(scopes.m)
 se(scopes.b)
 
 #-----------
-## HOT SCOPE
+#Distribution of metabolic expanisbility at warm range boundary
 scopes.b= na.omit(phy$scope.hot[which(phy$Taxa=="Bird")])
 scopes.m= na.omit(phy$scope.hot[which(phy$Taxa=="Mammal")])
 
 dbh= density(scopes.b)
 dmh= density(scopes.m)
 
+#find peak of density distribution
 peak.bh=dbh$x[which.max(dbh$y)]
 peak.mh=dmh$x[which.max(dmh$y)]
 
-#medians, mean
+#calculate medians, mean
 median(scopes.b); mean(scopes.b);sd(scopes.b)
 median(scopes.m); mean(scopes.m);sd(scopes.m)
 
 #------------------------------
-#TEMP PLOTS
+#PLOTS PREDICTED AND OBSERVED THERMAL CONSTRAINTS
 # TAMB= TCRIT - (FACTOR-1)BMR/COND
 
-#Add temp prediction
+#Predict physiological constraints
+#Add temp prediction based on metabolic expansibility across species
 phy$Tamb_low=NA
 phy$Tamb_up=NA
 
@@ -150,11 +161,11 @@ sel= which(phy$Taxa=="Mammal")
 phy[sel,"Tamb_low"]= phy$Tlc[sel]-(peak.m-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
 phy[sel,"Tamb_up"]= phy$Tuc[sel]+(peak.mh-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
 
-#account for constrained
+#account for constrained range edges
 phy$Tamb_low[which(phy$Cconstrained==1)] = NA
 phy$Tamb_up[which(phy$Wconstrained==1)] = NA
 
-#account for species with Tmax<Tuc
+#account for species within themonetural zone (Tmax<Tuc)
 inds= which(phy$Tuc> phy$Tmax.use)
 phy[inds,"Tamb_up"]=NA
 
