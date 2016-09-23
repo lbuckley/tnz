@@ -9,6 +9,8 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRexpansibility_Buckleyetal.csv")
+# phy=read.csv("MRelevation_all.csv")
+
 #----------------------------
 #read Msum data
 setwd(paste(mydir,"Data\\Msum\\", sep=""))
@@ -68,7 +70,7 @@ MsumE= 1
 sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
 
-phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
+phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$CMIN_mlO2_hC
 
 phymsum= phy[!is.na(phy$pMsum),]
 #--------------
@@ -88,7 +90,6 @@ hl=ggplot(phy, aes(pMsum, fill = Taxa)) +
   geom_histogram(binwidth = 0.2)+labs(x=expression(Msum / MR[CRB]))+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw() +xlim(c(0,2.25))+theme(axis.title=element_text(size=rel(1.3)))
 
 #Plot TRAITS
-
 
 #lower
 xyrange= range(c(phy$Tamb_low_Msum, phy$Tmin.use), na.rm=TRUE)
