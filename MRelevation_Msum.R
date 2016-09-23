@@ -8,9 +8,7 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
-#phy=read.csv("MRelevation_allMASTER.csv")
-
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
 #----------------------------
 #read Msum data
 setwd(paste(mydir,"Data\\Msum\\", sep=""))
@@ -55,13 +53,11 @@ phy$BMR_mlO2_h_Msum[matched]<- mammMsum2$BMR__mlO2_h[match1[matched]]
 #Proportion Msum at range edge
 Tmin= phy$Tmedian.min
 Tmax= phy$Tmedian.max
-#Tmin= phy$T10q.min
-#Tmax= phy$T10q.max
 
-NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
+NBMR= abs(phy$Tlc- Tmin)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
 phy$pMsum<- phy$Msum_mlO2_h / NBMR
 
-NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+NBMR= abs(phy$Tuc - Tmax)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
 phy$pMsum.hot<- phy$Msum_mlO2_h / NBMR
 
 #use peak of 1: median=1.1, mean=1.2
