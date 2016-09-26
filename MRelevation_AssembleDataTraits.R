@@ -372,6 +372,10 @@ phy$Sconstrained[matched]= const$Sconstrained[match1[matched]]
 phy$Species[matched]
 const$gen_spec[match1[matched]]
 
+#write out
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+write.csv(phy, "Phy_all_wConstrained.csv", row.names = FALSE)
+
 #restrict to species with at least one unconstrained edge
 phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
 

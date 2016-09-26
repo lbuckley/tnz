@@ -8,8 +8,11 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #-----------------------------
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRexpansibility_Buckleyetal.csv")
-# phy=read.csv("MRelevation_all.csv")
+#phy=read.csv("MRexpansibility_Buckleyetal.csv")
+#phy=read.csv("MRelevation_all.csv")
+
+#include constrained species
+phy=read.csv("MRelevation_all_wConstrained.csv")
 
 #----------------------------
 #read Msum data
@@ -24,53 +27,55 @@ phy$Msum_mlO2_h=NA
 phy$BMR_mlO2_h_Msum=phy$BMR_mlO2_h
 
 #add birds
-match1= match(phy$Spec.syn, birdMsum$Species) 
+match1= match(birdMsum$Species, phy$Spec.syn) 
 matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
-phy$Msum_mlO2_h[matched]<- birdMsum$Msum_mlO2_h[match1[matched]]
-phy$BMR_mlO2_h_Msum[matched]<- birdMsum$BMR_mlO2_h[match1[matched]]
+phy$Msum_mlO2_h[match1[matched]]<- birdMsum$Msum_mlO2_h[matched]
+phy$BMR_mlO2_h_Msum[match1[matched]]<- birdMsum$BMR_mlO2_h[matched]
 
 birdMsum2$Species= str_trim( as.character(birdMsum2$Species),side="both" )
-match1= match(phy$Spec.syn, birdMsum2$Species) 
+match1= match(birdMsum2$Species, phy$Spec.syn) 
 matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
-phy$Msum_mlO2_h[matched]<- birdMsum2$Msum_mlO2_h[match1[matched]]
+phy$Msum_mlO2_h[match1[matched]]<- birdMsum2$Msum_mlO2_h[matched]
 
 #add mammals
 mammMsum$Species= paste(mammMsum$gen, mammMsum$species, sep=" ")
 
-match1= match(phy$Spec.syn, mammMsum$Species) 
+match1= match(mammMsum$Species, phy$Spec.syn) 
 matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
-phy$Msum_mlO2_h[matched]<- mammMsum$Msum_mlO2_h[match1[matched]]
-phy$BMR_mlO2_h_Msum[matched]<- mammMsum$BMR__mlO2_h[match1[matched]]
+phy$Msum_mlO2_h[match1[matched]]<- mammMsum$Msum_mlO2_h[matched]
+phy$BMR_mlO2_h_Msum[match1[matched]]<- mammMsum$BMR__mlO2_h[matched]
 
-match1= match(phy$Spec.syn, mammMsum2$Species) 
+match1= match(mammMsum2$Species, phy$Spec.syn) 
 matched= which(!is.na(match1))
 not.matched= which(is.na(match1))
-phy$Msum_mlO2_h[matched]<- mammMsum2$Msum_mlO2_h[match1[matched]]
-phy$BMR_mlO2_h_Msum[matched]<- mammMsum2$BMR__mlO2_h[match1[matched]]
+phy$Msum_mlO2_h[match1[matched]]<- mammMsum2$Msum_mlO2_h[matched]
+phy$BMR_mlO2_h_Msum[match1[matched]]<- mammMsum2$BMR__mlO2_h[matched]
 
+#----------------------------
+phy2= phy[which(!is.na(phy$Msum_mlO2_h)),]
 #----------------------------
 #Proportion Msum at range edge
 Tmin= phy$Tmedian.min
 Tmax= phy$Tmedian.max
 
-NBMR= abs(phy$Tlc- Tmin)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
-phy$pMsum<- phy$Msum_mlO2_h / NBMR
+NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
+phy$pMsum<- NBMR / phy$Msum_mlO2_h
 
-NBMR= abs(phy$Tuc - Tmax)*phy$CMIN_mlO2_hC +phy$BMR_mlO2_h
-phy$pMsum.hot<- phy$Msum_mlO2_h / NBMR
+NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+phy$pMsum.hot<- NBMR / phy$Msum_mlO2_h 
 
-#use peak of 1: median=1.1, mean=1.2
+#median=0.9, mean=1.1
 median(phy$pMsum, na.rm=TRUE)
 mean(phy$pMsum, na.rm=TRUE)
-MsumE= 1
+MsumE= 0.9
 
 sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
 
-phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$CMIN_mlO2_hC
+phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
 
 phymsum= phy[!is.na(phy$pMsum),]
 #--------------
@@ -78,6 +83,8 @@ phymsum= phy[!is.na(phy$pMsum),]
 #Write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy, "MRelevation_Msum.csv")
+
+write.csv(phymsum, "MRelevation_Msum_nonoa.csv")
 
 #===============================
 #PLOT
@@ -93,6 +100,8 @@ hl=ggplot(phy, aes(pMsum, fill = Taxa)) +
 
 #lower
 xyrange= range(c(phy$Tamb_low_Msum, phy$Tmin.use), na.rm=TRUE)
+xyrange[1]= -50
+
 #xyrange[1]= -60
 p <- ggplot(data = phy, aes(x = Tamb_low_Msum, y = T10q.min, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
@@ -113,3 +122,4 @@ print(pl,vp=vplayout(2,1))
 
 dev.off()
 
+ 

@@ -1,4 +1,4 @@
- ## set directory for data files
+## set directory for data files
 ## RUN AFTER ASSEMBLIG DATA _AssembleDataTraits
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
@@ -6,7 +6,7 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 #READ PHYS DATA
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy= read.csv("Phy_all.csv")
-
+#phy= read.csv("Phy_all_wConstrained.csv")
 #---------------------------------------
 
 #ADD Tmin / Tmax
@@ -134,4 +134,5 @@ phy= phy[-which(is.na(phy$Species)),]
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy, "MRelevation_all.csv", row.names = FALSE)
+#write.csv(phy, "MRelevation_all_wConstrained.csv", row.names = FALSE)
 #--------------------------------------
