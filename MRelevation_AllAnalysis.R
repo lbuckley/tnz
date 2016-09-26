@@ -170,8 +170,16 @@ birds= phy[which(phy$Taxa=="Bird"),]
 mammals= phy[which(phy$Taxa=="Mammal"),]
 
 #check outliers
+phy[which(phy$MetElev>100),]
+#change hiberbation data
+#Hiberbate in caves: http://animaldiversity.org/accounts/Myotis_lucifugus/
+phy[which(phy$Species=="Myotis lucifugus"),torpor]=1
+#Ammodramus savannarum: drop migratory, http://animaldiversity.org/accounts/Ammodramus_savannarum/
+
 #drop one outlier
 phy=phy[-which(phy$MetElev>100),]
+
+phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
 
 #=============================
 # PLOTS
