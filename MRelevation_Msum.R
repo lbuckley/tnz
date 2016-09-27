@@ -54,8 +54,15 @@ not.matched= which(is.na(match1))
 phy$Msum_mlO2_h[match1[matched]]<- mammMsum2$Msum_mlO2_h[matched]
 phy$BMR_mlO2_h_Msum[match1[matched]]<- mammMsum2$BMR__mlO2_h[matched]
 
-#----------------------------
+# drop species with Msum~ BMR
+phy[which(phy$Species=="Sorex cinereus"), "Msum_mlO2_h"]= NA
+phy[which(phy$Species=="Sorex cinereus"), "BMR_mlO2_h_Msum"]= NA
+
 phy2= phy[which(!is.na(phy$Msum_mlO2_h)),]
+
+#count of birds and mammals
+table(phy2$Taxa)
+
 #----------------------------
 #Proportion Msum at range edge
 Tmin= phy$Tmedian.min
@@ -67,10 +74,14 @@ phy$pMsum<- NBMR / phy$Msum_mlO2_h
 NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
 phy$pMsum.hot<- NBMR / phy$Msum_mlO2_h 
 
-#median=0.9, mean=1.1
+#find peak
+d.msum= density(phy2$pMsum)
+peak.msum=d.msum$x[which.max(d.msum$y)] 
+
+#median=0.88, mean=0.94
 median(phy$pMsum, na.rm=TRUE)
 mean(phy$pMsum, na.rm=TRUE)
-MsumE= 0.9
+MsumE= peak.msum #peak=0.70
 
 sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
@@ -94,7 +105,7 @@ hist(na.omit(phy$pMsum),breaks=8)
 #-----------
 
 hl=ggplot(phy, aes(pMsum, fill = Taxa)) + 
-  geom_histogram(binwidth = 0.2)+labs(x=expression(MR[CRB] / Msum))+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw() +xlim(c(0,2.25))+theme(axis.title=element_text(size=rel(1.3)))
+  geom_histogram(binwidth = 0.2)+labs(x=expression(MR[CRB] / Msum))+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw() +xlim(c(0.25,2.25))+theme(axis.title=element_text(size=rel(1.3)))
 
 #Plot TRAITS
 
@@ -124,4 +135,9 @@ print(pl,vp=vplayout(2,1))
 
 dev.off()
 
- 
+#--------------------------
+#msum factor
+phymsum$Msum_fact=phymsum$Msum_mlO2_h/phymsum$BMR_mlO2_h
+
+plot(phymsum$Msum_fact, phymsum$pMsum)
+summary(phymsum$Msum_fact)

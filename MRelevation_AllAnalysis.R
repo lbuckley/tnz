@@ -101,21 +101,36 @@ phy[inds,"Tamb_upSS"]=NA
 phy$MetElev[which(phy$Cconstrained==1)] = NA
 phy$MetElev.hot[which(phy$Wconstrained==1)] = NA
 
+#check outliers
+phy[which(phy$MetElev>100),]
+#Myotis lucifugus: Hibernate in caves isolated from environments, http://animaldiversity.org/accounts/Myotis_lucifugus/
+#Ammodramus savannarum: migratory, http://animaldiversity.org/accounts/Ammodramus_savannarum/
+#drop outlier for reasons above
+phy=phy[-which(phy$MetElev>100),]
+
+phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
+#Planigale tenuirostris, ADW: lives in soil cavities
+
+#--------------------------
 #Distribution of metabolic expanisbility at cold range boundary
 #Plot density of metabolic expansibility
-#NEED TO CHECK MetElev >10 # & phy$scope<10
 MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird")])
 MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal")])
 
-db= density(MetElevs.b)
-dm= density(MetElevs.m)
+#numbers of species
+length(MetElevs.b)
+length(MetElevs.m)
 
+#calcualte density
+db= density(MetElevs.b,n=50)
+dm= density(MetElevs.m)
+ 
 #find peak of density distribution
 #peak.b=db$x[which.max(db$y)]
 #find mean of two edges of peak
 peak.b=mean(db$x[order(db$y, decreasing=TRUE)[1:2]])
 
-peak.m=dm$x[which.max(dm$y)]
+peak.m=dm$x[which.max(dm$y)] 
 
 #calculate medians, mean
 median(MetElevs.b); mean(MetElevs.b);sd(MetElevs.b)
@@ -130,6 +145,11 @@ se(MetElevs.b)
 MetElevs.b= na.omit(phy$MetElev.hot[which(phy$Taxa=="Bird")])
 MetElevs.m= na.omit(phy$MetElev.hot[which(phy$Taxa=="Mammal")])
 
+#numbers of species
+length(MetElevs.b)
+length(MetElevs.m)
+
+#calculate density
 dbh= density(MetElevs.b)
 dmh= density(MetElevs.m)
 
@@ -169,18 +189,6 @@ phy[inds,"Tamb_up"]=NA
 birds= phy[which(phy$Taxa=="Bird"),]
 mammals= phy[which(phy$Taxa=="Mammal"),]
 
-#check outliers
-phy[which(phy$MetElev>100),]
-#change hiberbation data
-#Hiberbate in caves: http://animaldiversity.org/accounts/Myotis_lucifugus/
-phy[which(phy$Species=="Myotis lucifugus"),torpor]=1
-#Ammodramus savannarum: drop migratory, http://animaldiversity.org/accounts/Ammodramus_savannarum/
-
-#drop one outlier
-phy=phy[-which(phy$MetElev>100),]
-
-phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
-
 #=============================
 # PLOTS
 
@@ -188,7 +196,7 @@ phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
 
 #DENSITY PLOTS
 dl=ggplot(phy, aes(MetElev, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2))) + theme(legend.position="none")
 
 du=  ggplot(phy, aes(MetElev.hot, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
@@ -198,17 +206,20 @@ du=  ggplot(phy, aes(MetElev.hot, fill = Taxa)) +
 #OPTIONS: color=Order, color=log(Mass..g.), diet, ForStrat, Activity.Nocturnal, Activity.Crepuscular,Activity.Diurnal, Nocturnal         
 #Food, Climate, Habitat, Torpor, Clutch_Size, Incubation 
 
+phy$Torpor= as.factor(phy$torpor)
+phy$Mass= phy$Mass_g
+
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
 xyrange[1]= -60
-p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
+p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=Torpor, size= log(Mass))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
+pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2))) + theme(legend.position="none")
 #+ facet_wrap(~Taxa)
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
-p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=as.factor(torpor), size= log(Mass_g)))+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
+p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=Torpor, size= log(Mass)))+ xlim(xyrange)+ylim(xyrange)+xlab("Physiological temperature limit (°C)")+ylab("Warm range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
 pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2)))
 
@@ -329,7 +340,7 @@ rownames(bird.u)= bird.u$gen_spec
 #Conservatism
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("FigSphy.pdf", height=8, width=4)
+pdf("FigSphy.pdf", height=8, width=5)
 
 par(mfcol=c(3,2)) 
 
@@ -508,6 +519,7 @@ pglsModel <- gls(MetElev.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlatio
 
 pglsModel <- gls(MetElev.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
 
+summary(pglsModel)
 #------------
 #Fit lambda simultaneous
 fitPagel <- gls(MetElev.hot ~ log(Mass_g) + diet+ Nocturnal +torpor, correlation=corPagel(value=0.8, phy=MammTree.l), data=mamm.l)
