@@ -140,6 +140,11 @@ library(raster)
 library(maptools)
 data(wrld_simpl)
 
+#-------------
+#pick model
+#mod="HD"
+mod="CC"
+
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
 #USE WORLD CLIM PROJECTIONS

@@ -31,13 +31,13 @@ clim.fmin= clim.f$bc60bi706/10
 #'model' should be one of "AC", "BC", "CC", "CE", "CN", "GF", "GD", "GS", "HD", "HG", "HE", "IN", "IP", "MI", "MR", "MC", "MP", "MG", or "NO".
 #'rcp' should be one of 26, 45, 60, or 85.
 #'year' should be 50 or 70
+# models: http://worldclim.org/CMIP5_30s
 
 plot(clim.fmax-clim.pmax)
 #-----------------------------------------
 #Load physiological data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
-#phy=na.omit(phy[,1:30])
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
 #Calculate ambient prediction
 #Calculate MR elevation
@@ -163,25 +163,7 @@ clim.spec.crop[!(sc %in% df1$clump_id)] <- NA
 
 if(!is.na(sum(as.matrix(clim.spec.crop))) )clim.spec.crop= trim(clim.spec.crop)
 
-##Cut off tails, need to account for Central America, etc
-#rsum= rowSums(as.matrix(clim.spec.crop), na.rm=TRUE) 
-#clim.spec.crop[ which(rsum< (max(rsum)/10)), ]<- NA #cut off tails<10% row sums
-
 #-----------------------------
-##restrict to biggest clump again
-###find clumps
-#sc= clump(clim.spec.crop, directions=4)
-
-## calculate frequency of each clump/patch
-#sc.freq <- as.data.frame(freq(sc))
-#sc.freq<- sc.freq[!is.na(sc.freq$value),]
-
-## store clump ID's with small size
-##rmID <- sc.freq$value[which(sc.freq$count <100)]
-##restrict to biggest clump
-#rmID <- sc.freq$value[which.max(sc.freq$count)]
-#clim.spec.crop[!sc %in% rmID] <- NA
-#clim.spec.crop[sc %in% rmID] <- 1 
 
 range.s= extent(clim.spec.crop)
 
@@ -292,5 +274,5 @@ rlim$index= 1:nrow(rlim)
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 rlim.out= cbind(phy$Species, rlim)
-write.csv(rlim.out,"MammalRlim.csv")
+write.csv(rlim.out, paste("MammalRlim_",mod,".csv", sep=""))
 #=======================

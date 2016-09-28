@@ -6,6 +6,9 @@
 #
 #BIRDS
 #########################################
+#pick model
+mod="HD"
+#mod="CC"
 
 library(dismo)
 library(raster)
@@ -25,19 +28,28 @@ clim.pmax= clim.p$bio5/10
 clim.pmin= clim.p$bio6/10
 
 #future data
-clim.f=getData('CMIP5', var='bio', res=5, rcp=60, model='BC', year=70)
-clim.fmax= clim.f$bc60bi705/10
-clim.fmin= clim.f$bc60bi706/10
+if(mod=="HD") {
+  clim.f=getData('CMIP5', var='bio', res=5, rcp=60, model='HD', year=70) #HadGEM2-AO
+  clim.fmax= clim.f$hd60bi705/10
+  clim.fmin= clim.f$hd60bi706/10
+}
+  
+if(mod=="CC") {
+  clim.f=getData('CMIP5', var='bio', res=5, rcp=60, model='CC', year=70) #CCSM4
+  clim.fmax= clim.f$cc60bi705/10
+  clim.fmin= clim.f$cc60bi706/10
+}  
+  
 #'model' should be one of "AC", "BC", "CC", "CE", "CN", "GF", "GD", "GS", "HD", "HG", "HE", "IN", "IP", "MI", "MR", "MC", "MP", "MG", or "NO".
 #'rcp' should be one of 26, 45, 60, or 85.
 #'year' should be 50 or 70
+# models: http://worldclim.org/CMIP5_30s
 
 plot(clim.fmax-clim.pmax)
 #-----------------------------------------
 #Load physiological data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
-#phy=na.omit(phy[,1:30])
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
 #Calculate ambient prediction
 #Calculate MR elevation
@@ -85,7 +97,7 @@ rlim= matrix(NA, nrow=nrow(phy), ncol=13) #ymin past, ymax past, ymin future, ym
 
 #plot range maps
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-pdf("BirdRangePred.pdf", height = 10, width = 10)
+pdf(paste("BirdRangePred_",mod,".pdf", sep=""), height = 10, width = 10)
 
 par(mfrow=c(4,4), cex=1.2, mar=c(3, 3, 0.5, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", tck=0.02, mgp=c(1, 0, 0))
 
@@ -162,25 +174,7 @@ clim.spec.crop[!(sc %in% df1$clump_id)] <- NA
 
 if(!is.na(sum(as.matrix(clim.spec.crop))) ) clim.spec.crop= trim(clim.spec.crop)
 
-##Cut off tails, need to account for Central America, etc
-#rsum= rowSums(as.matrix(clim.spec.crop), na.rm=TRUE) 
-#clim.spec.crop[ which(rsum< (max(rsum)/10)), ]<- NA #cut off tails<10% row sums
-
 #-----------------------------
-#restrict to biggest clump again
-##find clumps
-#sc= clump(clim.spec.crop, directions=4)
-
-## calculate frequency of each clump/patch
-#sc.freq <- as.data.frame(freq(sc))
-#sc.freq<- sc.freq[!is.na(sc.freq$value),]
-
-## store clump ID's with small size
-##rmID <- sc.freq$value[which(sc.freq$count <100)]
-##restrict to biggest clump
-#rmID <- sc.freq$value[which.max(sc.freq$count)]
-#clim.spec.crop[!sc %in% rmID] <- NA
-#clim.spec.crop[sc %in% rmID] <- 1 
 
 range.s= extent(clim.spec.crop)
 
@@ -288,5 +282,5 @@ colnames(rlim)= c('pmin','pmax','fmin','fmax', 'parea','farea','ponly','pandf','
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 rlim.out= cbind(phy$Species, rlim)
-write.csv(rlim.out,"BirdRlim.csv")
+write.csv(rlim.out, paste("BirdRlim_",mod,".csv", sep=""))
 #=======================
