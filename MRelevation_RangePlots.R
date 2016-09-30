@@ -6,7 +6,13 @@ library(ggmap)
 library(maps)
 library(mapdata)
 library(colorRamps)     # for matlab.like(...)
+#--------------------
+#pick model
 
+mod="CC"
+#mod="HD"
+
+#--------------------
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
 #rad data
@@ -21,7 +27,7 @@ rlim.m.hd=read.csv("MammalRlim_HD.csv")
 rlim.b.cc$proj="CC"
 rlim.b.hd$proj="HD"
 rlim.m.cc$proj="CC"
-rlim.m.hd$proj="CC"
+rlim.m.hd$proj="HD"
 
 rlim=rbind(rlim.b.cc[,1:16], rlim.b.hd[,1:16], rlim.m.cc[,1:16], rlim.m.hd[,1:16])
 
@@ -29,9 +35,20 @@ rlim=rbind(rlim.b.cc[,1:16], rlim.b.hd[,1:16], rlim.m.cc[,1:16], rlim.m.hd[,1:16
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
+#subset to model
+rlim_mod= rlim[rlim$proj==mod,]
+
 #Match species
-match1= match(as.character(rlim$phy.Species), as.character(phy$Species) )
-pall= cbind(phy[match1,],rlim)
+match1= match(as.character(rlim_mod$phy.Species), as.character(phy$Species) )
+pall= cbind(phy[match1,],rlim_mod)
+
+#-----------------------------
+#fix infinite medians
+
+pall$pmin.median[!is.finite(pall$pmin.median)]=NA
+pall$pmax.median[!is.finite(pall$pmax.median)]=NA
+pall$fmin.median[!is.finite(pall$fmin.median)]=NA
+pall$fmax.median[!is.finite(pall$fmax.median)]=NA
 
 #===================================================
 #Calculate conductance (CMIN)
@@ -160,10 +177,7 @@ pall$cmed.shift= pall$cf.med - pall$cp.med
 pall$w.shift= pall$wf - pall$wp 
 pall$wmed.shift= pall$wf.med - pall$wp.med 
 
-#fix infinites
-pall$cmed.shift[!is.finite(pall$cmed.shift)]=NA
-pall$wmed.shift[!is.finite(pall$wmed.shift)]=NA
-
+#plot of median shift
 dl=ggplot(pall, aes(cmed.shift, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
 
@@ -284,7 +298,7 @@ library(gridBase)
 
 ##FIG 4
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("Fig4.pdf", height=8, width=8)
+pdf(paste("Fig4",mod,".pdf", sep=""), height=8, width=8)
 par(mfrow=c(2,2), cex=1.1, mar=c(3, 3, 1, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", tck=0.02, mgp=c(1, 0, 0))
 
 #change directory back for shapefiles

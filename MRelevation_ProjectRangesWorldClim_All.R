@@ -4,15 +4,14 @@
 # Estimaates ranges based on physiological limits
 # Don't consider west / east range boundaries, use observed limits?
 #
-#BIRDS
 #########################################
 #pick model
 #mod="HD"
 mod="CC"
 
 #pick taxa
-tax="Bird"
-#tax="Mammal"
+#tax="Bird"
+tax="Mammal"
 
 library(dismo)
 library(raster)
@@ -218,9 +217,6 @@ if(!is.na(sum(as.matrix(clim.spec.crop))) ) clim.spec.crop= trim(clim.spec.crop)
 
 range.s= extent(clim.spec.crop)
 
-if(clim==1) range.p= clim.spec.crop
-if(clim==2) range.f= clim.spec.crop
-
 #Control for constraints
 lat.range= c(range.s@ymin, range.s@ymax) 
 if(phy$predC[spec]==0 & phy$hemi[spec]=="N")lat.range[2]=NA
@@ -230,12 +226,16 @@ if(phy$predW[spec]==0 & phy$hemi[spec]=="N")lat.range[1]=NA
 if(phy$predW[spec]==0 & phy$hemi[spec]=="S")lat.range[2]=NA
 
 #find range
-if(clim==1) rlim[spec,1:2]= lat.range 
-if(clim==2) rlim[spec,3:4]= lat.range
+if(clim==1) rlim[spec,1:2]= lat.range #past lat range
+if(clim==2) rlim[spec,3:4]= lat.range #future lat range
 
 #find lat range by column
 pred1=clim.spec.crop
 pred1[!is.na(pred1)] <- 1
+
+#record area
+if(clim==1) range.p= pred1
+if(clim==2) range.f= pred1
 
 yr= raster(clim.spec.crop)
 yr <- init(yr, 'y')
@@ -245,8 +245,15 @@ yr= as.matrix(yr)
 ymax=  median(apply(yr, MARGIN=2, max, na.rm=TRUE),na.rm=TRUE)
 ymin=  median(apply(yr, MARGIN=2, min, na.rm=TRUE),na.rm=TRUE)
 
-if(clim==1) rlim[spec,10:11]= c(ymin,ymax) 
-if(clim==2) rlim[spec,12:13]= c(ymin,ymax)
+#Control for constraints
+if(phy$predC[spec]==0 & phy$hemi[spec]=="N") ymax=NA
+if(phy$predC[spec]==0 & phy$hemi[spec]=="S") ymin=NA
+if(phy$predC[spec]==0 & phy$hemi[spec]=="B"){ymax=NA; ymin=NA}
+if(phy$predW[spec]==0 & phy$hemi[spec]=="N") ymin=NA
+if(phy$predW[spec]==0 & phy$hemi[spec]=="S") ymax=NA
+
+if(clim==1) rlim[spec,10:11]= c(ymin,ymax) # past range medians
+if(clim==2) rlim[spec,12:13]= c(ymin,ymax) # future range medians
 
 } #end clim loop
 #----------------
@@ -284,9 +291,10 @@ plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
 plot(shape, add=TRUE)
 legend("topleft", legend= c(paste("Cold=",phy$predC[spec]),paste("Warm=",phy$predW[spec]) ),bty="n")
 #-------------------
+
 #Extract stats
-rlim[spec,5]=cellStats(range.p, stat='sum', na.rm=TRUE)
-rlim[spec,6]=cellStats(range.f, stat='sum', na.rm=TRUE)
+rlim[spec,5]=cellStats(range.p, stat='sum', na.rm=TRUE) #past area
+rlim[spec,6]=cellStats(range.f, stat='sum', na.rm=TRUE) #future area
 
 range.p2=range.p*-2
 
@@ -295,13 +303,13 @@ range.b=mosaic(range.p2, range.f, fun=mean, tolerance=0.05)
 freqs= raster::freq(range.b, useNA='no')
 
 freq1= freqs[freqs[,"value"]==-2, "count"]
-if(length(freq1>0)) rlim[spec,7]= freq1
+if(length(freq1>0)) rlim[spec,7]= freq1 #past only
 
 freq1= freqs[freqs[,"value"]==-1, "count"]
-if(length(freq1>0)) rlim[spec,8]= freq1
+if(length(freq1>0)) rlim[spec,8]= freq1 #both fast and future
 
 freq1= freqs[freqs[,"value"]==1, "count"]
-if(length(freq1>0)) rlim[spec,9]= freq1
+if(length(freq1>0)) rlim[spec,9]= freq1 #future only
 
 #-------
 ##range extent
