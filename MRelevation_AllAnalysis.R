@@ -24,6 +24,25 @@ count=function(x) length(na.omit(x))
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
+#-----------------------
+#Calculate conductance (CMIN)
+phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
+
+#assign temperature metric
+Tmin= phy$Tmedian.min
+Tmax= phy$Tmedian.max
+
+#Calculate MR elevation
+NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev<- NBMR / phy$BMR_mlO2_h
+
+NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev.hot<- NBMR / phy$BMR_mlO2_h
+
+#Add temp prediction
+phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
+phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
+
 #========================================
 #Recode North / South range constraints to Cold / Warm boundaries
 #C=1: cold constraint; W=1: warm constraint

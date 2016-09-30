@@ -152,11 +152,10 @@ speciesnames.rds<- gsub("\\.rds", "", speciesfiles.rds)
 
 #---------
 #LOOP SPECIES
-for(spec in 39:nrow(phy) ){
+for(spec in 1:nrow(phy) ){
 
   #LOAD SHAPEFILE AND EXTRACT EXT
-  #shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep=""))  
-  #saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep=""))
+  #shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep=""))
   if(tax=="Bird") shape= readRDS(paste(phy[spec,"ShapeName"],".rds",sep=""))
   if(tax=="Mammal") shape= readRDS(paste(phy[spec,"Spec.syn"],".rds",sep=""))
   
@@ -169,7 +168,6 @@ for(clim in 1:2){ #present, future
     
   ## CURRENT CLIMATE
   #Subset to above Tmin and below Tmax
-  #account for species with only one constraint
   if(phy$predC[spec]==1) clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
   if(phy$predW[spec]==1) clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
   

@@ -9,21 +9,75 @@ library(colorRamps)     # for matlab.like(...)
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
-#write out
+#rad data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 
-rlim.b=read.csv("BirdRlim.csv")
-rlim.m=read.csv("MammalRlim.csv")
+rlim.b.cc=read.csv("BirdRlim_CC.csv")
+rlim.b.hd=read.csv("BirdRlim_HD.csv")
+rlim.m.cc=read.csv("MammalRlim_CC.csv")
+rlim.m.hd=read.csv("MammalRlim_HD.csv")
 
-rlim=rbind(rlim.b, rlim.m[,1:15])
+#add field for projection
+rlim.b.cc$proj="CC"
+rlim.b.hd$proj="HD"
+rlim.m.cc$proj="CC"
+rlim.m.hd$proj="CC"
+
+rlim=rbind(rlim.b.cc[,1:16], rlim.b.hd[,1:16], rlim.m.cc[,1:16], rlim.m.hd[,1:16])
 
 #match to phy
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
 #Match species
 match1= match(as.character(rlim$phy.Species), as.character(phy$Species) )
 pall= cbind(phy[match1,],rlim)
+
+#===================================================
+#Calculate conductance (CMIN)
+pall$Cmin= abs((0-pall$BMR_mlO2_h)/(pall$Tb-pall$Tlc) )
+
+#assign temperature metric
+Tmin= pall$Tmedian.min
+Tmax= pall$Tmedian.max
+
+#Calculate MR elevation
+NBMR= abs(pall$Tlc- Tmin)*pall$Cmin +pall$BMR_mlO2_h
+pall$MetElev<- NBMR / pall$BMR_mlO2_h
+
+NBMR= abs(pall$Tuc - Tmax)*pall$Cmin +pall$BMR_mlO2_h
+pall$MetElev.hot<- NBMR / pall$BMR_mlO2_h
+
+#Add temp prediction
+pall$Tamb_lowSS= pall$Tlc-(pall$MetElev-1)* pall$BMR_mlO2_h / pall$Cmin
+pall$Tamb_upSS= pall$Tuc+(pall$MetElev.hot-1)* pall$BMR_mlO2_h / pall$Cmin
+
+#===================================================
+#Add edges to predict
+#Recode North / South range constraints to Cold / Warm boundaries
+#C=1: cold constraint; W=1: warm constraint
+
+pall$Cconstrained= NA 
+pall$Wconstrained= NA
+
+#Northern hemisphere
+inds= which(pall$UpperLat>0 & pall$LowerLat>0  )
+pall$Cconstrained[inds]= pall$Nconstrained[inds] 
+pall$Wconstrained[inds]= pall$Sconstrained[inds]
+
+#Southern hemisphere
+inds= which(pall$UpperLat<0 & pall$LowerLat<0  )
+pall$Cconstrained[inds]= pall$Sconstrained[inds] 
+pall$Wconstrained[inds]= pall$Nconstrained[inds]
+
+#Crosses hemispheres 
+#Change to both cold boundaries, consider constrained if either constraint
+inds= which(pall$UpperLat>0 & pall$LowerLat<0  )
+con= pall$Sconstrained + pall$Nconstrained
+con[which(con==2)]=1
+
+pall$Cconstrained[inds]= con[inds] 
+pall$Wconstrained[inds]= 1
 
 #----------
 #Specify edges to predict
@@ -54,6 +108,11 @@ pall$cp.med= NA
 pall$wp= NA
 pall$wp.med= NA
 
+pall$cf= NA
+pall$cf.med= NA
+pall$wf= NA
+pall$wf.med= NA
+
 #North
 inds= which( pall$predC==1 & pall$hemi=="N")
 pall$cp[inds]= pall$pmax[inds]
@@ -82,13 +141,13 @@ pall$wf.med[inds]= pall$fmax.median[inds]
 
 #Both
 inds= which( pall$predC==1 & pall$hemi=="B")
-imin= which(abs(phy$UpperLat[inds])>abs(phy$LowerLat[inds])  )  
+imin= which(abs(pall$UpperLat[inds])>abs(pall$LowerLat[inds])  )  
 pall$cp[inds[imin]]= pall$pmax[inds[imin]]
 pall$cp.med[inds[imin]]= pall$pmax.median[inds[imin]]
 pall$cf[inds[imin]]= pall$fmax[inds[imin]]
 pall$cf.med[inds[imin]]= pall$fmax.median[inds[imin]]
 
-imin= which(abs(phy$UpperLat[inds])<abs(phy$LowerLat[inds])  )  
+imin= which(abs(pall$UpperLat[inds])<abs(pall$LowerLat[inds])  )  
 pall$cp[inds[imin]]= pall$pmin[inds[imin]]
 pall$cp.med[inds[imin]]= pall$pmin.median[inds[imin]]
 pall$cf[inds[imin]]= pall$fmin[inds[imin]]
@@ -101,10 +160,14 @@ pall$cmed.shift= pall$cf.med - pall$cp.med
 pall$w.shift= pall$wf - pall$wp 
 pall$wmed.shift= pall$wf.med - pall$wp.med 
 
+#fix infinites
+pall$cmed.shift[!is.finite(pall$cmed.shift)]=NA
+pall$wmed.shift[!is.finite(pall$wmed.shift)]=NA
+
 dl=ggplot(pall, aes(cmed.shift, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
 
-#hist(pall$cmed.shift)
+#hist(pall$cmed.shift, breaks=40)
 
 #-----------------
 #RANGE SIZE CHANGE
