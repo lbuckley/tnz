@@ -9,8 +9,8 @@ library(colorRamps)     # for matlab.like(...)
 #--------------------
 #pick model
 
-mod="CC"
-#mod="HD"
+#mod="CC"
+mod="HD"
 
 #--------------------
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
@@ -172,16 +172,35 @@ pall$cf.med[inds[imin]]= pall$fmin.median[inds[imin]]
 
 #--------------
 #RANGE SHIFT METRICS 
+
 pall$c.shift= pall$cf - pall$cp 
 pall$cmed.shift= pall$cf.med - pall$cp.med 
+cn=which(pall$cp<0)
+pall$c.shift[cn]= -pall$cf[cn] + pall$cp[cn] 
+pall$cmed.shift[cn]= -pall$cf.med[cn] + pall$cp.med[cn] 
+
 pall$w.shift= pall$wf - pall$wp 
 pall$wmed.shift= pall$wf.med - pall$wp.med 
+wn=which(pall$wp<0)
+pall$w.shift[wn]= -pall$wf[wn] + pall$wp[wn] 
+pall$wmed.shift[wn]= -pall$wf.med[wn] + pall$wp.med[wn] 
 
 #plot of median shift
 dl=ggplot(pall, aes(cmed.shift, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
 
+#summary
+summary(pall[pall$Taxa=="Mammal", "cmed.shift"])
+summary(pall[pall$Taxa=="Bird", "cmed.shift"])
+
+#-------------
 #hist(pall$cmed.shift, breaks=40)
+
+#plot extreme shifts
+de=ggplot(pall, aes(c.shift, fill = Taxa)) + 
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+theme_bw()
+
+#plot(de)
 
 #-----------------
 #RANGE SIZE CHANGE
@@ -189,9 +208,10 @@ rall= pall[which(pall$predC==1 & pall$predW==1),]
 
 #area
 rall$area.shift= rall$farea/rall$parea
+rall$area.shift[!is.finite(rall$area.shift)]=NA
 
 da=ggplot(rall, aes(area.shift, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Latitude shift at cold range boundary (°)")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(0,4))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Change in area")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(0,4))
 
 plot(da)
 
@@ -219,8 +239,8 @@ data(wrld_simpl)
 
 #-------------
 #pick model
-#mod="HD"
-mod="CC"
+mod="HD"
+#mod="CC"
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
