@@ -21,8 +21,10 @@ names(phy)[6:9]= c("Mass_g","Tlc","Tuc","TNZ")
 
   #Limit to high quality
   #remove poor quality ##LOOSE 36 SPECIEs
-  phy= phy[-which(phy$Quality %in% c("B","C","D")), ]
+  phy= phy[-which(phy$Quality %in% c("D")), ]
+#The code "1" means that data is of good quality and code "2"means that UCT value is fine but the sample size is small (these codes were assign by Prof. Wolf and Prof. Andrew).   The code "A" is for the UCT values that were given in the abstract or text but the figures of the respective papers did not document any increase in metabolic rate.  The code "B" is for the data that was taken from different theses supervised by Prof. Rolan Prinzinger and it should be fine.  The code "C" means that the increase in metabolic rate can be seen in the figures given in the papers but UCT values are not mentioned in the text. The code "D" means that the maximum temperature at which metabolic rate was measured was taken as UCT. 
   
+    
 frist= read.csv("FristoeData.csv")
 
 #Match species
@@ -60,7 +62,7 @@ noct.mamm=read.csv("Bennie_TimePartitioning.csv")
 #--------------------------
 #MATCH DATA
 phy$Species= paste(phy$Genus,phy$Species, sep=" " )
-phy.all= phy[,c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc", "BMR_mlO2_h","CMIN_mlO2_hC")]
+phy.all= phy[,c("Species","Order","Taxa","Mass_g","Tb","Tlc","Tuc", "BMR_mlO2_h","CMIN_mlO2_hC","Quality")]
 phy.all$BMR_W=NA
 phy.all$Source="KhaliqHof"
 
@@ -383,5 +385,7 @@ phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-write.csv(phy, "Phy_all.csv", row.names = FALSE)
+write.csv(phy, "Phy_all_addQuality.csv", row.names = FALSE)
+
+table(phy[,c("Taxa","Quality")])
 #--------------------------------------
