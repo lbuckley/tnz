@@ -1,3 +1,213 @@
+##RUN AFTER EXTRACT TMIN SCOPE
+
+library(geiger)
+library(plyr)
+library(caper)
+library (vegan)
+library(ggplot2)
+library(car)
+library(picante)
+library(phytools)
+library(ape)
+library(grid)
+library(MuMIn) #for model averaging
+
+mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
+
+#define functions
+count=function(x) length(na.omit(x))
+
+#=======================================
+## READ DATASET
+#-----------------------------
+#Read physiology data
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+phy=read.csv("MRexpansibility_Buckleyetal.csv")
+
+#-----------------------
+#Calculate conductance (CMIN)
+phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
+
+#assign temperature metric
+Tmin= phy$Tmedian.min
+Tmax= phy$Tmedian.max
+
+#Calculate MR elevation
+NBMR= abs(phy$Tlc- Tmin)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev<- NBMR / phy$BMR_mlO2_h
+
+NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev.hot<- NBMR / phy$BMR_mlO2_h
+
+#Add temp prediction
+phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
+phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
+
+#========================================
+#Recode North / South range constraints to Cold / Warm boundaries
+#C=1: cold constraint; W=1: warm constraint
+
+phy$Cconstrained= NA 
+phy$Wconstrained= NA
+
+#Northern hemisphere
+inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
+phy$Cconstrained[inds]= phy$Nconstrained[inds] 
+phy$Wconstrained[inds]= phy$Sconstrained[inds]
+
+#Southern hemisphere
+inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
+phy$Cconstrained[inds]= phy$Sconstrained[inds] 
+phy$Wconstrained[inds]= phy$Nconstrained[inds]
+
+#Crosses hemispheres 
+#Change to both cold boundaries, consider constrained if either constraint
+inds= which(phy$UpperLat>0 & phy$LowerLat<0  )
+con= phy$Sconstrained + phy$Nconstrained
+con[which(con==2)]=1
+
+phy$Cconstrained[inds]= con[inds] 
+phy$Wconstrained[inds]= 1
+
+#======================================
+#ADD METABOLIC CONSTRAINTS
+
+#Calculate conductance (CMIN)
+phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
+
+#specify temperature metrics (Tmin and Tmax) to use
+phy$Tmin.use=phy$Tmedian.min
+phy$Tmax.use=phy$Tmedian.max
+
+plot(phy$Tlc, phy$Tmin.use)
+abline(a=0, b=1)
+plot(phy$Tuc, phy$Tmax.use)
+abline(a=0, b=1)
+
+#Restrict to species with Tmin below the lower extent of the thermoneutral zone (Tmin <Tlc)
+phy= phy[which((phy$Tlc - phy$Tmin.use)>0),]
+
+#-------------------------
+#CALCULATE METABOLIC EXPANSIBILITY (MetElev)
+
+#Cold boundary
+NBMR= abs(phy$Tlc- phy$Tmin.use)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev= NBMR / phy$BMR_mlO2_h
+
+#Warm boundary
+NBMR= abs(phy$Tuc - phy$Tmax.use)*phy$Cmin +phy$BMR_mlO2_h
+phy$MetElev.hot= NBMR / phy$BMR_mlO2_h
+
+#-------------------------
+## PREDICT PHYSIOLOGICAL TEMPERATURE LIMITS
+#Species specific environmental temperature than we predict the species can tolerate 
+
+#Cold boundary
+phy$Tamb_lowSS= phy$Tlc-(phy$MetElev-1)* phy$BMR_mlO2_h / phy$Cmin
+
+#Warm boundary
+phy$Tamb_upSS= phy$Tuc+(phy$MetElev.hot-1)* phy$BMR_mlO2_h / phy$Cmin
+
+#change species with Tmax cooler than the upper end of thermal neutral zone (Tuc>Tmax) to NA
+inds= which(phy$Tuc> phy$Tmax.use)
+phy[inds,"MetElev.hot"]=NA
+phy[inds,"Tamb_upSS"]=NA
+
+#=======================================
+#ANALYSIS
+
+#remove constrained range boundaries from analysis
+phy$MetElev[which(phy$Cconstrained==1)] = NA
+phy$MetElev.hot[which(phy$Wconstrained==1)] = NA
+
+#check outliers
+phy[which(phy$MetElev>100),]
+#Myotis lucifugus: Hibernate in caves isolated from environments, http://animaldiversity.org/accounts/Myotis_lucifugus/
+#Ammodramus savannarum: migratory, http://animaldiversity.org/accounts/Ammodramus_savannarum/
+#drop outlier for reasons above
+phy=phy[-which(phy$MetElev>100),]
+
+phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
+#Planigale tenuirostris, ADW: lives in soil cavities
+
+#--------------------------
+#Distribution of metabolic expanisbility at cold range boundary
+#Plot density of metabolic expansibility
+MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird")])
+MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal")])
+
+#numbers of species
+length(MetElevs.b)
+length(MetElevs.m)
+
+#calcualte density
+db= density(MetElevs.b,n=50)
+dm= density(MetElevs.m)
+
+#find peak of density distribution
+#peak.b=db$x[which.max(db$y)]
+#find mean of two edges of peak
+peak.b=mean(db$x[order(db$y, decreasing=TRUE)[1:2]])
+
+peak.m=dm$x[which.max(dm$y)] 
+
+#calculate medians, mean
+median(MetElevs.b); mean(MetElevs.b);sd(MetElevs.b)
+median(MetElevs.m); mean(MetElevs.m);sd(MetElevs.m)
+# se
+se=function(x) sd(x)/sqrt(sum(!is.na(x)))
+se(MetElevs.m)
+se(MetElevs.b)
+
+#-----------
+#Distribution of metabolic expanisbility at warm range boundary
+MetElevs.b= na.omit(phy$MetElev.hot[which(phy$Taxa=="Bird")])
+MetElevs.m= na.omit(phy$MetElev.hot[which(phy$Taxa=="Mammal")])
+
+#numbers of species
+length(MetElevs.b)
+length(MetElevs.m)
+
+#calculate density
+dbh= density(MetElevs.b)
+dmh= density(MetElevs.m)
+
+#find peak of density distribution
+peak.bh=dbh$x[which.max(dbh$y)]
+peak.mh=dmh$x[which.max(dmh$y)]
+
+#calculate medians, mean
+median(MetElevs.b); mean(MetElevs.b);sd(MetElevs.b)
+median(MetElevs.m); mean(MetElevs.m);sd(MetElevs.m)
+
+#------------------------------
+#PLOTS PREDICTED AND OBSERVED THERMAL CONSTRAINTS
+# TAMB= TCRIT - (FACTOR-1)BMR/COND
+
+#Predict physiological constraints
+#Add temp prediction based on metabolic expansibility across species
+phy$Tamb_low=NA
+phy$Tamb_up=NA
+
+sel= which(phy$Taxa=="Bird")
+phy[sel,"Tamb_low"]= phy$Tlc[sel]-(peak.b-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
+phy[sel,"Tamb_up"]= phy$Tuc[sel]+(peak.bh-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
+
+sel= which(phy$Taxa=="Mammal")
+phy[sel,"Tamb_low"]= phy$Tlc[sel]-(peak.m-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
+phy[sel,"Tamb_up"]= phy$Tuc[sel]+(peak.mh-1)* phy$BMR_mlO2_h[sel] / phy$Cmin[sel]
+
+#account for constrained range edges
+phy$Tamb_low[which(phy$Cconstrained==1)] = NA
+phy$Tamb_up[which(phy$Wconstrained==1)] = NA
+
+#account for species within themonetural zone (Tmax<Tuc)
+inds= which(phy$Tuc> phy$Tmax.use)
+phy[inds,"Tamb_up"]=NA
+
+birds= phy[which(phy$Taxa=="Bird"),]
+mammals= phy[which(phy$Taxa=="Mammal"),]
+
  
 #=============================
 # PLOTS
@@ -11,16 +221,6 @@ dl=ggplot(phy, aes(MetElev, fill = Taxa)) +
 du=  ggplot(phy, aes(MetElev.hot, fill = Taxa)) + 
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4)))
 
-#split birds and mammals
-phy.mamm= phy[phy$Taxa=="Mammal",]
-phy.bird= phy[phy$Taxa=="Bird",]
-
-dl.mamm=ggplot(phy.mamm, aes(MetElev)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4)))+ theme(legend.position="none")
-
-dl.bird=ggplot(phy.bird, aes(MetElev)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="none")
-
 #facet
 phy$Taxa_f = factor(phy$Taxa, levels=c('Mammal','Bird'))
 
@@ -28,8 +228,6 @@ dl=ggplot(phy, aes(MetElev)) +
   stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="none") +  theme(strip.text.x = element_text(size = rel(1.4)))
 
 dl2= dl+ facet_grid(. ~ Taxa_f)
-
-# +   annotate("text", x = 4, y=13000, label = "ship")
 
 #---------------------
 #Plot TRAITS
@@ -39,9 +237,6 @@ dl2= dl+ facet_grid(. ~ Taxa_f)
 phy$Torpor= as.factor(phy$torpor)
 phy$Mass= phy$Mass_g
 
-#split birds and mammals
-phy.mamm= phy[phy$Taxa=="Mammal",]
-phy.bird= phy[phy$Taxa=="Bird",]
 
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
@@ -49,24 +244,14 @@ xyrange[1]= -60
 p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, shape=Taxa, color=Torpor, size= log(Mass))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
 pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.2))) + theme(legend.position="none")
-#+ facet_wrap(~Taxa)
 #-------------
 #facet
 
 p <- ggplot(data = phy, aes(x = Tamb_low, y = Tmin.use, color=Torpor, size= log(Mass))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")
-pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="bottom")
+pl= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="bottom")+  theme(strip.text.x = element_text(size = rel(1.4)))
 pl2= pl + facet_grid(. ~ Taxa_f)
 
 #-------------
-#split lower by taxa
-p <- ggplot(data = phy.mamm, aes(x = Tamb_low, y = Tmin.use, color=Torpor, size= log(Mass))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
-#+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl.mamm= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position = c(.2, .7))+ theme(legend.text = element_text(size = rel(1.4)), legend.title = element_text(size = rel(1.4)))
-
-p <- ggplot(data = phy.bird, aes(x = Tamb_low, y = Tmin.use, color=Torpor, size= log(Mass))) + xlim(xyrange)+ylim(xyrange) +xlab("Physiological temperature limit (°C)")+ylab("Cold range boundary temperature (°C)")+ scale_shape_manual(values = c(1,19))
-#+ scale_color_manual(values = c("gray","darkgreen","purple"))
-pl.bird= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="none") +theme(axis.title.x=element_blank(),
-axis.title.y=element_blank() )
 
 #upper
 xyrange= range(c(phy$Tamb_up, phy$Tmax.use[!is.na(phy$Tamb_up)]), na.rm=TRUE)
@@ -74,29 +259,12 @@ p <- ggplot(data = phy, aes(x = Tamb_up, y = Tmax.use, shape=Taxa, color=Torpor,
 #+ scale_color_manual(values = c("gray","darkgreen","purple"))
 pu= p + geom_point() + geom_abline(intercept=0, slope=1)+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4)))
 
-#----------
-#mammal and bird overlaid
-
-#setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-#pdf("Fig1.pdf", height=10, width=12)
-
-##plot
-#grid.newpage()
-#pushViewport(viewport(layout=grid.layout(2,2)))
-#vplayout<-function(x,y)
-#  viewport(layout.pos.row=x,layout.pos.col=y)
-#print(dl,vp=vplayout(1,1))
-#print(du,vp=vplayout(1,2))
-#print(pl,vp=vplayout(2,1))
-#print(pu,vp=vplayout(2,2))
-
-#dev.off()
-
 #----------------------
+#PLOTS
 #Upper limits in supplement
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("Fig1.pdf", height=10, width=10)
+pdf("Fig1.pdf", height=10, width=8)
 
 #plot
 grid.newpage()
@@ -105,37 +273,6 @@ vplayout<-function(x,y)
   viewport(layout.pos.row=x,layout.pos.col=y)
 print(dl2,vp=vplayout(1,1))
 print(pl2,vp=vplayout(2,1))
-
-dev.off()
-
-#=======================================
-#--------------------------
-#Extract legend
-
-library(grid)
-library(gridExtra)
-
-#extract legend
-#https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
-g_legend<-function(a.gplot){
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)}
-
-legend<-g_legend(pl.mamm)
-
-#----------------------------
-setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("Fig1.pdf", height=10,width=10)
-
-lheight <- sum(legend$height)
-p <- arrangeGrob(dl.mamm, pl.mamm, dl.bird, pl.bird, ncol=2, left=textGrob("Absorptivity", rot = 90, gp=gpar(fontsize=20)))
-
-theight <- unit(20, "points")
-p <- arrangeGrob(p, textGrob("Physiological Temperature Limit (°C)", gp=gpar(fontsize=20)), heights=unit.c(unit(1, "npc") - theight, theight))
-p <- arrangeGrob(p, legend, heights=unit.c(unit(1, "npc") - lheight, lheight), ncol=1)
-print(p)
 
 dev.off()
 
