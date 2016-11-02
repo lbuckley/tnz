@@ -6,8 +6,8 @@
 #
 #########################################
 #pick model
-#mod="HD"
-mod="CC"
+mod="HD"
+#mod="CC"
 
 #pick taxa
 #tax="Bird"
