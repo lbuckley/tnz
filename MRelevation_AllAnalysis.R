@@ -208,7 +208,6 @@ phy[inds,"Tamb_up"]=NA
 birds= phy[which(phy$Taxa=="Bird"),]
 mammals= phy[which(phy$Taxa=="Mammal"),]
 
- 
 #=============================
 # PLOTS
 
@@ -788,4 +787,23 @@ summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 sd(phy1$MRfact)
 sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 
+#---------------------------
+## CHECK UCT DATA QUALITY
+
+setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
+uct.q= read.csv("McKechnieetal2016.csv")
+
+#check species calculated warm range boundary
+spec.w=phy[which(!is.na(phy$MetElev.hot)),"Species"]
+
+#match
+match1= match(spec.w, uct.q$Species)
+
+summary(uct.q[match1,"Category"]) #41 species
+#Good Ins. data       NA    No UCT       
+#  10         2         7        23          
+
+#Distribution of metabolic expanisbility at warm range boundary
+MetElevs.b= na.omit(phy$MetElev.hot[which(phy$Taxa=="Bird")])
+MetElevs.m= na.omit(phy$MetElev.hot[which(phy$Taxa=="Mammal")])
 
