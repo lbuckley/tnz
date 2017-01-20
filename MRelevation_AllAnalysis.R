@@ -113,6 +113,11 @@ inds= which(phy$Tuc> phy$Tmax.use)
 phy[inds,"MetElev.hot"]=NA
 phy[inds,"Tamb_upSS"]=NA
 
+#proportion species with Tuc>Tmax
+phy.con= phy[which(phy$Wconstrained==0),]
+phy.con= phy.con[which(phy.con$Tuc> phy.con$Tmax.use),]
+summary(phy.con$Taxa)
+
 #=======================================
 #ANALYSIS
 
