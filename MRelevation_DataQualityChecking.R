@@ -21,18 +21,19 @@ uct.qual=read.csv("McKechnieetal2016.csv")
 
 #add quality columns
 phy$lon=NA; phy$lat=NA; phy$active=NA; phy$fasted=NA;
-phy$capture_quality=NA; phy$feeding=NA; phy$activity=NA
+phy$capture_quality=NA; phy$feeding=NA; phy$activity=NA; phy$omit=NA
 
 match1= match(phy$Species, qual$Spec.syn)
 matched= which(!is.na(match1))
 
-phy$lon[matched]= qual$Longitude[match1[matched]]
-phy$lat[matched]= qual$Latitude[match1[matched]] 
+phy$lon[matched]= as.numeric( as.character( qual$Longitude[match1[matched]] ) )
+phy$lat[matched]= as.numeric( as.character( qual$Latitude[match1[matched]] ) )
 phy$active[matched]= as.character( qual$active[match1[matched]] ) 
 phy$fasted[matched]= as.character( qual$fasted[match1[matched]] )
 phy$capture_quality[matched]= as.character( qual$capture_quality[match1[matched]] ) 
 phy$feeding[matched]= as.character( qual$feeding[match1[matched]] )
 phy$activity[matched]= as.character( qual$activity[match1[matched]] )
+phy$omit[matched]= as.character( qual$omit[match1[matched]] )
 
 #add geographic data columns
 phy$lat.center=NA
@@ -64,14 +65,25 @@ summary(as.factor(bird$feeding))
 summary(as.factor(bird$activity))
 summary(as.factor(bird$uct.qual))
 
+#-------------------------------------
+
+#check whether sampling location is within range extent
+phy$check= ifelse(phy$UpperLat>phy$lat & phy$LowerLat<phy$lat, 1, 0)
 
 #Calculate distance from measurement to range edge
-north= abs(phy$UpperLat), abs(phy$LowerLat))
-phy$dist.poleward= abs(phy$lat-phy$lat.center)
+cold= ifelse( abs(phy$UpperLat)> abs(phy$LowerLat), phy$UpperLat, phy$LowerLat)
 
+phy$dist.cold= abs(cold-phy$lat)
+phy$dist.cold.perrange= phy$dist.cold/ (phy$UpperLat - phy$LowerLat  )
 
+#distance to center
+phy$dist.center= abs(phy$lat.center-phy$lat)
 
+#-------------------------------------
+#write out
 
+setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
+write.csv(phy,"MRexpansibility_Buckleyetal_wQual.csv")
 
 
 
