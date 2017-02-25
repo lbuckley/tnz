@@ -224,16 +224,16 @@ mammals= phy[which(phy$Taxa=="Mammal"),]
 
 #DENSITY PLOTS
 dl=ggplot(phy, aes(MetElev, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2))) + theme(legend.position="none")
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic expansibility at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.2))) + theme(legend.position="none")
 
 du=  ggplot(phy, aes(MetElev.hot, fill = Taxa)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4)))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic expansibility at warm range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4)))
 
 #facet
 phy$Taxa_f = factor(phy$Taxa, levels=c('Mammal','Bird'))
 
 dl=ggplot(phy, aes(MetElev)) + 
-  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic elevation at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="none") +  theme(strip.text.x = element_text(size = rel(1.4)))
+  stat_density(aes(y = ..density..), position = "identity", color = "black", alpha = 0.5)+xlab("Metabolic expansibility at cold range boundary")+ scale_fill_manual(values = c("darkgreen","blue"))+xlim(c(1,10))+theme_bw()+theme(axis.title=element_text(size=rel(1.4)),axis.text=element_text(size=rel(1.4))) + theme(legend.position="none") +  theme(strip.text.x = element_text(size = rel(1.4)))
 
 dl2= dl+ facet_grid(. ~ Taxa_f)
 
@@ -400,18 +400,18 @@ rownames(bird.u)= bird.u$gen_spec
 #Conservatism
 
 setwd(paste(mydir,"MRelevation\\Figures\\", sep=""))
-pdf("FigSphy.pdf", height=8, width=5)
+pdf("FigSphy.pdf", height=6, width=5)
 
-par(mfcol=c(3,2)) 
+par(mfcol=c(2,2)) 
 
 #mammals
 me= log(mamm.l[match(MammTree.l$tip.label,as.character(mamm.l$gen_spec)),"MetElev"])
 names(me)= mamm.l$gen_spec
 obj<-contMap(MammTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
-me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"MetElev.hot"])
-names(me)= mamm.u$gen_spec
-obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
+#me= log(mamm.u[match(MammTree.u$tip.label,as.character(mamm.u$gen_spec)),"MetElev.hot"])
+#names(me)= mamm.u$gen_spec
+#obj<-contMap(MammTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 ## FIX TRAIT NAs #,method="anc.ML"
 
 ##MASS
@@ -425,9 +425,9 @@ me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"MetEle
 names(me)= bird.l$gen_spec
 obj<-contMap(BirdTree.l,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
-me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"MetElev.hot"])
-names(me)= bird.u$gen_spec
-obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
+#me= log(bird.u[match(BirdTree.u$tip.label,as.character(bird.u$gen_spec)),"MetElev.hot"])
+#names(me)= bird.u$gen_spec
+#obj<-contMap(BirdTree.u,me,fsize=c(0.1,0.6),outline=FALSE, type="fan",ftype="off")
 
 ##MASS
 me= log(bird.l[match(BirdTree.l$tip.label,as.character(bird.l$gen_spec)),"Mass_g"])
@@ -811,12 +811,33 @@ match1= match(spec.w, uct.q$Species)
 summary(uct.q[match1,"Category"]) #41 species
 #Good Ins. data       NA    No UCT       
 #  10         2         7        23          
-
-#Distribution of metabolic expanisbility at warm range boundary
-MetElevs.b= na.omit(phy$MetElev.hot[which(phy$Taxa=="Bird")])
-MetElevs.m= na.omit(phy$MetElev.hot[which(phy$Taxa=="Mammal")])
-
+ 
 #Distribution of metabolic expanisbility at cold range boundary
 #Plot density of metabolic expansibility
-MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird")])
-MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal")])
+phy1= phy[which(!is.na(phy$MetElev)),]
+
+phy.b= phy1[which(phy1$Taxa=="Bird"),]
+phy.m=  phy1[which(phy1$Taxa=="Mammal"),]
+
+phy.check= phy.b
+summary(as.factor(phy.check$active))
+summary(as.factor(phy.check$fasted))
+summary(as.factor(phy.check$capture_quality))
+summary(as.factor(phy.check$feeding))
+summary(as.factor(phy.check$activity))
+summary(phy.check$dist.cold)
+summary(phy.check$dist.cold.perrange)
+summary(phy.check$dist.center)
+summary(phy.check$check)
+
+#check effects of quality
+mod1= lm(phy.check$MetElev~ as.factor(phy.check$active) + as.factor(phy.check$fasted) + as.factor(phy.check$capture_quality) + as.factor(phy.check$feeding) + as.factor(phy.check$activity) )
+
+mod1= lm(phy.check$MetElev~ phy.check$dist.cold.perrange )
+mod1= lm(phy.check$MetElev~ phy.check$dist.cold )
+
+phy.check$capture_quality[which(phy.check$capture_quality=="OK ")]<-"OK" #correct space
+phy.check$capture_quality[which(phy.check$capture_quality=="" | phy.check$capture_quality==" ")]<-"UNK" #code UNK
+
+mod1= lm(phy.check$MetElev~ phy.check$capture_quality )
+summary(mod1)

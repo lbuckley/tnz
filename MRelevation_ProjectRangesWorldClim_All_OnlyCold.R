@@ -84,17 +84,14 @@ if(tax=="Mammal") phy= phy[which(phy$Taxa=="Mammal"),]
 #C=1: cold constraint; W=1: warm constraint
 
 phy$Cconstrained= NA 
-phy$Wconstrained= NA
 
 #Northern hemisphere
 inds= which(phy$UpperLat>0 & phy$LowerLat>0  )
 phy$Cconstrained[inds]= phy$Nconstrained[inds] 
-phy$Wconstrained[inds]= phy$Sconstrained[inds]
 
 #Southern hemisphere
 inds= which(phy$UpperLat<0 & phy$LowerLat<0  )
 phy$Cconstrained[inds]= phy$Sconstrained[inds] 
-phy$Wconstrained[inds]= phy$Nconstrained[inds]
 
 #Crosses hemispheres 
 #Change to both cold boundaries, consider constrained if either constraint
@@ -103,17 +100,11 @@ con= phy$Sconstrained + phy$Nconstrained
 con[which(con==2)]=1
 
 phy$Cconstrained[inds]= con[inds] 
-phy$Wconstrained[inds]= 1
 
 #drop cold constrained ranges
 phy=phy[which(phy$Cconstrained==0),]
 
 #----------
-#Specify edges to predict
-phy$predC=0
-phy$predW=0
-phy$predC[which( !is.na(phy$Tamb_lowSS) & phy$Cconstrained==0 )]=1
-#phy$predW[which( !is.na(phy$Tamb_upSS) & phy$Wconstrained==0 )]=1
 
 #add hemisphere
 phy$hemi=NA
@@ -123,9 +114,6 @@ inds= which(phy$UpperLat<0)
 phy$hemi[inds]="S"
 inds= which(phy$LowerLat<0 & phy$UpperLat>0)
 phy$hemi[inds]="B"
-
-#Limit to species with data
-phy= phy[phy$predC==1 | phy$predW==1,]
 
 #sort by species name
 phy= phy[order(phy$Species),]
@@ -169,15 +157,11 @@ for(clim in 1:2){ #present, future
   if(clim==2) clim.pmin1= clim.fmin; clim.pmax1= clim.fmax
     
   ## CURRENT CLIMATE
-  #Subset to above Tmin and below Tmax
-  if(phy$predC[spec]==1) clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
-  if(phy$predW[spec]==1) clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
-  
+  #Subset to above Tmin
+  clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
+
   #specify prediction
-  if(phy$predC[spec]==1 & phy$predW[spec]==1) clim.spec= clim.pmin1 + clim.pmax1
-  if(phy$predC[spec]==1 & phy$predW[spec]==0) clim.spec= clim.pmin1
-  if(phy$predC[spec]==0 & phy$predW[spec]==1) clim.spec= clim.pmax1
-  
+  clim.spec= clim.pmin1
   clim.spec= trim(clim.spec)
 
 #crop to lon extent
@@ -222,11 +206,9 @@ range.s= extent(clim.spec.crop)
 
 #Control for constraints
 lat.range= c(range.s@ymin, range.s@ymax) 
-if(phy$predC[spec]==0 & phy$hemi[spec]=="N")lat.range[2]=NA
-if(phy$predC[spec]==0 & phy$hemi[spec]=="S")lat.range[1]=NA
-if(phy$predC[spec]==0 & phy$hemi[spec]=="B"){lat.range[1]=NA; lat.range[2]=NA}
-if(phy$predW[spec]==0 & phy$hemi[spec]=="N")lat.range[1]=NA
-if(phy$predW[spec]==0 & phy$hemi[spec]=="S")lat.range[2]=NA
+
+if(phy$hemi[spec]=="N")lat.range[1]=NA
+if(phy$hemi[spec]=="S")lat.range[2]=NA
 
 #find range
 if(clim==1) rlim[spec,1:2]= lat.range #past lat range
@@ -249,11 +231,8 @@ ymax=  median(apply(yr, MARGIN=2, max, na.rm=TRUE),na.rm=TRUE)
 ymin=  median(apply(yr, MARGIN=2, min, na.rm=TRUE),na.rm=TRUE)
 
 #Control for constraints
-if(phy$predC[spec]==0 & phy$hemi[spec]=="N") ymax=NA
-if(phy$predC[spec]==0 & phy$hemi[spec]=="S") ymin=NA
-if(phy$predC[spec]==0 & phy$hemi[spec]=="B"){ymax=NA; ymin=NA}
-if(phy$predW[spec]==0 & phy$hemi[spec]=="N") ymin=NA
-if(phy$predW[spec]==0 & phy$hemi[spec]=="S") ymax=NA
+if(phy$hemi[spec]=="N") ymin=NA
+if(phy$hemi[spec]=="S") ymax=NA
 
 if(clim==1) rlim[spec,10:11]= c(ymin,ymax) # past range medians
 if(clim==2) rlim[spec,12:13]= c(ymin,ymax) # future range medians
@@ -263,9 +242,16 @@ if(clim==2) rlim[spec,12:13]= c(ymin,ymax) # future range medians
 #plot
 
 #set extent
+ymin= extent(shape)@ymin
+  
 extent1= union(extent(range.p),extent(range.f))
 extent2= extent(shape)
 cext= union(extent1, extent2)
+
+#set warm extent to shape file
+if(phy$UpperLat>0 & phy$LowerLat>0) wlim= extent(shape)  
+
+cext ## SET WARM RANGE EDGE
 
 #make extent square
 xl= cext@xmax - cext@xmin
@@ -292,7 +278,7 @@ plot(wrld_simpl, add=TRUE, border="gray")
 #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], ext=cext)
 plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
 plot(shape, add=TRUE)
-legend("topleft", legend= c(paste("Cold=",phy$predC[spec]),paste("Warm=",phy$predW[spec]) ),bty="n")
+
 #-------------------
 
 #Extract stats
