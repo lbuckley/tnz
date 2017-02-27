@@ -249,9 +249,13 @@ extent2= extent(shape)
 cext= union(extent1, extent2)
 
 #set warm extent to shape file
-if(phy$UpperLat>0 & phy$LowerLat>0) wlim= extent(shape)  
-
-cext ## SET WARM RANGE EDGE
+#N hemi
+if(phy$UpperLat[spec]>0 & phy$LowerLat[spec]>0) cext@ymin= extent(shape)@ymin -5  
+#S hemi
+if(phy$UpperLat[spec]<0 & phy$LowerLat[spec]<0) cext@ymax= extent(shape)@ymax +5
+#both hemispheres
+if(phy$UpperLat[spec]>0 & phy$LowerLat[spec]<0 & phy$UpperLat[spec]>abs(phy$LowerLat[spec]) ) cext@ymin= extent(shape)@ymin -5
+if(phy$UpperLat[spec]>0 & phy$LowerLat[spec]<0 & phy$UpperLat[spec]<abs(phy$LowerLat[spec]) ) cext@ymax= extent(shape)@ymax +5
 
 #make extent square
 xl= cext@xmax - cext@xmin

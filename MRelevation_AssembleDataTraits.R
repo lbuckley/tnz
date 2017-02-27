@@ -20,8 +20,8 @@ phy$gen_spec= paste(phy$Genus,"_",phy$Species,sep="")
 names(phy)[6:9]= c("Mass_g","Tlc","Tuc","TNZ")
 
   #Limit to high quality
-  #remove poor quality ##LOOSE 36 SPECIEs
-  phy= phy[-which(phy$Quality %in% c("D")), ]
+  #remove poor quality ##LOOSE 36 SPECIEs  ## NO LONGER REMOVE< ONLY REMOVE FOR UCT ANALYSES
+#  phy= phy[-which(phy$Quality %in% c("D")), ]
 #The code "1" means that data is of good quality and code "2"means that UCT value is fine but the sample size is small (these codes were assign by Prof. Wolf and Prof. Andrew).   The code "A" is for the UCT values that were given in the abstract or text but the figures of the respective papers did not document any increase in metabolic rate.  The code "B" is for the data that was taken from different theses supervised by Prof. Rolan Prinzinger and it should be fine.  The code "C" means that the increase in metabolic rate can be seen in the figures given in the papers but UCT values are not mentioned in the text. The code "D" means that the maximum temperature at which metabolic rate was measured was taken as UCT. 
   
     
@@ -310,6 +310,9 @@ phy$Spec.syn[which(phy$Spec.syn=="Poecile atricapillus")]="Parus atricapillus"
 phy$Spec.syn[which(phy$Spec.syn=="Junco hyemalis hyemalis")]="Junco hyemalis"
 phy$Spec.syn[which(phy$Spec.syn=="Junco hyemalis oreganus")]="Junco hyemalis"
 phy$Spec.syn[which(phy$Spec.syn=="Hesperiphona vespertina")]="Coccothraustes vespertinus"
+phy$Spec.syn[which(phy$Spec.syn=="Nectarinia bifasciata")]="Cinnyris bifasciatus"
+phy$Spec.syn[which(phy$Spec.syn=="Nectarinia senegalensis")]="Chalcomitra senegalensis"
+phy$Spec.syn[which(phy$Spec.syn=="Pipra mentalis")]="Ceratopipra mentalis"
 
 #Mammals
 phy$Spec.syn[which(phy$Spec.syn=="Galerella sanguinea")]="Herpestes sanguineus"
@@ -345,6 +348,7 @@ phy$Spec.syn[which(phy$Spec.syn=="Proteles cristatus")]="Proteles cristata"
 phy$Spec.syn[which(phy$Spec.syn=="Callithrix pygmaea")]="Cebuella pygmaea"
 phy$Spec.syn[which(phy$Spec.syn=="Dipodillus dasyurus")]="Gerbillus dasyurus"
 phy$Spec.syn[which(phy$Spec.syn=="Micaelamys namaquensis")]="Aethomys namaquensis"
+phy$Spec.syn[which(phy$Spec.syn=="Marmosa microtarsus")]="Gracilinanus microtarsus"
 
 phy$gen_spec= gsub(" ","_",phy$Species)
 
@@ -376,7 +380,7 @@ const$gen_spec[match1[matched]]
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-write.csv(phy, "Phy_all_wConstrained.csv", row.names = FALSE)
+write.csv(phy, "Phy_all_wConstrained_noUCTdrop.csv", row.names = FALSE)
 
 #restrict to species with at least one unconstrained edge
 phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
@@ -385,7 +389,7 @@ phy=phy[phy$Nconstrained==0 | phy$Sconstrained==0,]
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-write.csv(phy, "Phy_all_addQuality.csv", row.names = FALSE)
+write.csv(phy, "Phy_all_addQuality_noUCTdrop.csv", row.names = FALSE)
 
 table(phy[,c("Taxa","Quality")])
 #--------------------------------------

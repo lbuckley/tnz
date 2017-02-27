@@ -85,5 +85,19 @@ phy$dist.center= abs(phy$lat.center-phy$lat)
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy,"MRexpansibility_Buckleyetal_wQual.csv")
 
+#---------------------------------
+#update
 
+setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
+qual2=read.csv("MRexpansibility_Buckleyetal_wQual_27Feb2017.csv")
 
+#add capture information
+qual2$capture=NA
+
+match1= match(qual2$Species, qual$Spec.syn)
+matched= which(!is.na(match1))
+
+qual2$capture[matched]= as.character( qual$capture[match1[matched]] )
+
+#write back out
+write.csv(qual2, "MRexpansibility_Buckleyetal_wQual_28Feb2017.csv")

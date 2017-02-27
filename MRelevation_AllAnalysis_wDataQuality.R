@@ -24,7 +24,7 @@ count=function(x) length(na.omit(x))
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 #phy=read.csv("MRexpansibility_Buckleyetal.csv")
 
-phy=read.csv("MRexpansibility_Buckleyetal_wQual.csv") #read data including quality
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv") #read data including quality
 
 #drop two omit cases
 phy= phy[-which(phy$omit=="y"),]
@@ -796,7 +796,7 @@ summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 sd(phy1$MRfact)
 sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 
-#---------------------------
+#=================================================
 ## CHECK UCT DATA QUALITY
 
 setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
@@ -811,7 +811,11 @@ match1= match(spec.w, uct.q$Species)
 summary(uct.q[match1,"Category"]) #41 species
 #Good Ins. data       NA    No UCT       
 #  10         2         7        23          
- 
+
+
+#=================================================
+#CHECK LCT QUALITY
+
 #Distribution of metabolic expanisbility at cold range boundary
 #Plot density of metabolic expansibility
 phy1= phy[which(!is.na(phy$MetElev)),]
@@ -819,7 +823,7 @@ phy1= phy[which(!is.na(phy$MetElev)),]
 phy.b= phy1[which(phy1$Taxa=="Bird"),]
 phy.m=  phy1[which(phy1$Taxa=="Mammal"),]
 
-phy.check= phy.b
+phy.check= phy.m
 summary(as.factor(phy.check$active))
 summary(as.factor(phy.check$fasted))
 summary(as.factor(phy.check$capture_quality))
