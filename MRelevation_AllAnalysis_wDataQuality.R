@@ -23,8 +23,8 @@ count=function(x) length(na.omit(x))
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 #phy=read.csv("MRexpansibility_Buckleyetal.csv")
-
-phy=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv") #read data including quality
+#phy=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv") #read data including quality
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #drop two omit cases
 phy= phy[-which(phy$omit=="y"),]
@@ -101,6 +101,12 @@ phy$MetElev= NBMR / phy$BMR_mlO2_h
 #Warm boundary
 NBMR= abs(phy$Tuc - phy$Tmax.use)*phy$Cmin +phy$BMR_mlO2_h
 phy$MetElev.hot= NBMR / phy$BMR_mlO2_h
+
+#Get rid of warm boundary values for low quality species
+#Get rid of C & D
+phy[which(phy$Quality=="C" | phy$Quality=="D"),"MetElev.hot"]<- NA
+#Use McKechnie assessment
+phy[which(phy$uct.qual=="No UCT" | phy$uct.qual=="NA-"),"MetElev.hot"]<- NA
 
 #-------------------------
 ## PREDICT PHYSIOLOGICAL TEMPERATURE LIMITS
@@ -244,7 +250,6 @@ dl2= dl+ facet_grid(. ~ Taxa_f)
 
 phy$Torpor= as.factor(phy$torpor)
 phy$Mass= phy$Mass_g
-
 
 #lower
 xyrange= range(c(phy$Tamb_low, phy$Tmin.use), na.rm=TRUE)
@@ -649,7 +654,7 @@ anova(fitPagel, fitPagel1) #reject brownian
 
 #------------------
 setwd(paste(mydir,"MRelevation\\Data\\", sep=""))
-write.csv(phy, "MRelevation_wTraits.csv")
+write.csv(phy, "MRelevation_wTraits_noUCTdrop.csv")
 
 #=========================================================
 #PLOT RELATIONSHIP BETWEEN TEMPERATURE METRICS
@@ -795,22 +800,6 @@ summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 
 sd(phy1$MRfact)
 sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
-
-#=================================================
-## CHECK UCT DATA QUALITY
-
-setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
-uct.q= read.csv("McKechnieetal2016.csv")
-
-#check species calculated warm range boundary
-spec.w=phy[which(!is.na(phy$MetElev.hot)),"Species"]
-
-#match
-match1= match(spec.w, uct.q$Species)
-
-summary(uct.q[match1,"Category"]) #41 species
-#Good Ins. data       NA    No UCT       
-#  10         2         7        23          
 
 
 #=================================================

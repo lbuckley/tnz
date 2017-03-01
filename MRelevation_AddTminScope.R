@@ -1,12 +1,13 @@
-## set directory for data files
+ ## set directory for data files
 ## RUN AFTER ASSEMBLIG DATA _AssembleDataTraits
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
 #READ PHYS DATA
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy= read.csv("Phy_all.csv")
+#phy= read.csv("Phy_all.csv")
 #phy= read.csv("Phy_all_wConstrained.csv")
+phy= read.csv("Phy_all_addQuality_noUCTdrop.csv")
 #---------------------------------------
 
 #ADD Tmin / Tmax
@@ -19,6 +20,8 @@ phy$UpperLat= NA; phy$LowerLat=NA; phy$ShapeName=NA; phy$Area=NA;
 #Add Tmin Tmix data
 setwd(paste(mydir,"Out\\", sep=""))
 TminTmax= read.csv("MammalTminTmax.csv", na.strings = c("NA","Inf","-Inf"))
+TminTmax2= read.csv("MammalTminTmax_noUCTdrop.csv", na.strings = c("NA","Inf","-Inf"))
+TminTmax= rbind(TminTmax,TminTmax2)
 
 #Match species
 match1= match(as.character(phy$Spec.syn), as.character(TminTmax$species) )
@@ -47,6 +50,8 @@ phy$Area[matched]<- TminTmax$NumberGrids[match1[matched]]
 #Add Tmin Tmix data
 setwd(paste(mydir,"Out\\", sep=""))
 TminTmax= read.csv("BirdTminTmax.csv", na.strings = c("NA","Inf","-Inf"))
+TminTmax2= read.csv("BirdTminTmax_noUCTdrop.csv", na.strings = c("NA","Inf","-Inf"))
+TminTmax= rbind(TminTmax,TminTmax2)
 
 specgen<- gsub("_", " ", TminTmax$species)
 TminTmax$genspec<- substr(specgen, 1, nchar(specgen)-9)
@@ -133,6 +138,6 @@ phy= phy[-which(is.na(phy$Species)),]
 
 #write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-write.csv(phy, "MRelevation_all.csv", row.names = FALSE)
+write.csv(phy, "MRelevation_all_noUCTdrop.csv", row.names = FALSE)
 #write.csv(phy, "MRelevation_all_wConstrained.csv", row.names = FALSE)
 #--------------------------------------

@@ -4,11 +4,14 @@ mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
 #Read physiology data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRexpansibility_Buckleyetal.csv")
+#phy=read.csv("MRexpansibility_Buckleyetal.csv")
+phy= read.csv("MRelevation_all_noUCTdrop.csv")
 
 #read data quality data
+#setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
+#qual=read.csv("TNZ_DataQuality.csv")
 setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
-qual=read.csv("TNZ_DataQuality.csv")
+qual=read.csv("MRexpansibility_Buckleyetal_wQual_27Feb2017.csv")
 
 #load geographic data
 geo=read.csv("TNZ_GeoData.csv")
@@ -26,8 +29,17 @@ phy$capture_quality=NA; phy$feeding=NA; phy$activity=NA; phy$omit=NA
 match1= match(phy$Species, qual$Spec.syn)
 matched= which(!is.na(match1))
 
-phy$lon[matched]= as.numeric( as.character( qual$Longitude[match1[matched]] ) )
-phy$lat[matched]= as.numeric( as.character( qual$Latitude[match1[matched]] ) )
+#phy$lon[matched]= as.numeric( as.character( qual$Longitude[match1[matched]] ) )
+#phy$lat[matched]= as.numeric( as.character( qual$Latitude[match1[matched]] ) )
+#phy$active[matched]= as.character( qual$active[match1[matched]] ) 
+#phy$fasted[matched]= as.character( qual$fasted[match1[matched]] )
+#phy$capture_quality[matched]= as.character( qual$capture_quality[match1[matched]] ) 
+#phy$feeding[matched]= as.character( qual$feeding[match1[matched]] )
+#phy$activity[matched]= as.character( qual$activity[match1[matched]] )
+#phy$omit[matched]= as.character( qual$omit[match1[matched]] )
+
+phy$lon[matched]= as.numeric( as.character( qual$lon[match1[matched]] ) )
+phy$lat[matched]= as.numeric( as.character( qual$lat[match1[matched]] ) )
 phy$active[matched]= as.character( qual$active[match1[matched]] ) 
 phy$fasted[matched]= as.character( qual$fasted[match1[matched]] )
 phy$capture_quality[matched]= as.character( qual$capture_quality[match1[matched]] ) 
@@ -83,21 +95,21 @@ phy$dist.center= abs(phy$lat.center-phy$lat)
 #write out
 
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-write.csv(phy,"MRexpansibility_Buckleyetal_wQual.csv")
+write.csv(phy,"MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #---------------------------------
 #update
 
-setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
-qual2=read.csv("MRexpansibility_Buckleyetal_wQual_27Feb2017.csv")
+#setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
+#qual2=read.csv("MRexpansibility_Buckleyetal_wQual_27Feb2017.csv")
 
-#add capture information
-qual2$capture=NA
+##add capture information
+#qual2$capture=NA
 
-match1= match(qual2$Species, qual$Spec.syn)
-matched= which(!is.na(match1))
+#match1= match(qual2$Species, qual$Spec.syn)
+#matched= which(!is.na(match1))
 
-qual2$capture[matched]= as.character( qual$capture[match1[matched]] )
+#qual2$capture[matched]= as.character( qual$capture[match1[matched]] )
 
-#write back out
-write.csv(qual2, "MRexpansibility_Buckleyetal_wQual_28Feb2017.csv")
+##write back out
+#write.csv(qual2, "MRexpansibility_Buckleyetal_wQual_28Feb2017.csv")
