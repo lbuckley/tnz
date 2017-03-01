@@ -11,7 +11,7 @@ phy= read.csv("MRelevation_all_noUCTdrop.csv")
 #setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
 #qual=read.csv("TNZ_DataQuality.csv")
 setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
-qual=read.csv("MRexpansibility_Buckleyetal_wQual_27Feb2017.csv")
+qual=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv")
 
 #load geographic data
 geo=read.csv("TNZ_GeoData.csv")
@@ -91,9 +91,22 @@ phy$dist.cold.perrange= phy$dist.cold/ (phy$UpperLat - phy$LowerLat  )
 #distance to center
 phy$dist.center= abs(phy$lat.center-phy$lat)
 
-#-------------------------------------
-#write out
+#-----------------------------
+#indicate added species
+setwd(paste(mydir,"Out\\", sep=""))
+bird.add=read.csv("BirdTminTmax_noUCTdrop.csv")
+mamm.add=read.csv("MammalTminTmax_noUCTdrop.csv")
 
+phy$add=0
+match1= match(phy$Species, bird.add$genspec)
+matched= which(!is.na(match1))
+phy$add[matched]= 1
+
+match1= match(phy$Species, mamm.add$species)
+matched= which(!is.na(match1))
+phy$add[matched]= 1
+
+#write out
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 write.csv(phy,"MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 

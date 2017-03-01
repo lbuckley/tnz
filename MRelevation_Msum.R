@@ -12,7 +12,8 @@ setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 #phy=read.csv("MRelevation_all.csv")
 
 #include constrained species
-phy=read.csv("MRelevation_all_wConstrained.csv")
+#phy=read.csv("MRelevation_all_wConstrained.csv")
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #----------------------------
 #read Msum data
@@ -58,8 +59,6 @@ phy$BMR_mlO2_h_Msum[match1[matched]]<- mammMsum2$BMR__mlO2_h[matched]
 phy[which(phy$Species=="Sorex cinereus"), "Msum_mlO2_h"]= NA
 phy[which(phy$Species=="Sorex cinereus"), "BMR_mlO2_h_Msum"]= NA
 
-phy2= phy[which(!is.na(phy$Msum_mlO2_h)),]
-
 #count of birds and mammals
 table(phy2$Taxa)
 
@@ -74,14 +73,16 @@ phy$pMsum<- NBMR / phy$Msum_mlO2_h
 NBMR= abs(phy$Tuc - Tmax)*phy$Cmin +phy$BMR_mlO2_h
 phy$pMsum.hot<- NBMR / phy$Msum_mlO2_h 
 
+phy2= phy[which(!is.na(phy$Msum_mlO2_h)),]
+
 #find peak
 d.msum= density(phy2$pMsum)
 peak.msum=d.msum$x[which.max(d.msum$y)] 
 
-#median=0.88, mean=0.94
+#median=0.88, mean=0.96
 median(phy$pMsum, na.rm=TRUE)
 mean(phy$pMsum, na.rm=TRUE)
-MsumE= peak.msum #peak=0.70
+MsumE= peak.msum #peak=0.74
 
 sd(phy$pMsum, na.rm=TRUE)
 Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
@@ -89,6 +90,7 @@ Mdif= phy$Msum_mlO2_h- phy$BMR_mlO2_h
 phy$Tamb_low_Msum= phy$Tlc- MsumE*(phy$Msum_mlO2_h- phy$BMR_mlO2_h_Msum) / phy$Cmin
 
 phymsum= phy[!is.na(phy$pMsum),]
+
 #--------------
 
 #Write out

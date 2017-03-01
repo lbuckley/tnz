@@ -28,6 +28,7 @@ phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #drop two omit cases
 phy= phy[-which(phy$omit=="y"),]
+
 #-----------------------
 #Calculate conductance (CMIN)
 phy$Cmin= abs((0-phy$BMR_mlO2_h)/(phy$Tb-phy$Tlc) )
@@ -127,6 +128,7 @@ phy[inds,"Tamb_upSS"]=NA
 phy.con= phy[which(phy$Wconstrained==0),]
 phy.con= phy.con[which(phy.con$Tuc> phy.con$Tmax.use),]
 summary(phy.con$Taxa)
+# 39%
 
 #=======================================
 #ANALYSIS
@@ -800,7 +802,6 @@ summary(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 
 sd(phy1$MRfact)
 sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
-
 
 #=================================================
 #CHECK LCT QUALITY
