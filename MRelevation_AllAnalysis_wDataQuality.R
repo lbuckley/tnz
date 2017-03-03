@@ -164,7 +164,9 @@ dm= density(MetElevs.m)
 #find peak of density distribution
 #peak.b=db$x[which.max(db$y)]
 #find mean of two edges of peak
-peak.b=mean(db$x[order(db$y, decreasing=TRUE)[1:2]])
+#peak.b=mean(db$x[order(db$y, decreasing=TRUE)][1:2])
+#manually pick out 2 peaks in db
+peak.b= (2.067 + 3.3727)/2
 
 peak.m=dm$x[which.max(dm$y)] 
 
@@ -324,6 +326,7 @@ mod1= lm(mamm$MetElev.hot~ log(mamm$Mass_g) + mamm$diet + mamm$Nocturnal +mamm$t
 summary(mod1)
 AIC(mod1)
 
+anova(mod1)
 #residual plots
 crPlots(mod1)
 #--------------------------
@@ -641,6 +644,7 @@ pglsModel <- gls(MetElev ~ log(Mass_g) + diet+ Nocturnal, correlation = corBrown
 pglsModel <- gls(MetElev ~ log(Mass_g) + diet+ Nocturnal, correlation = corPagel(0.2, phy = MammTree.l, fixed= FALSE), data = mamm.l, method = "ML")
 
 pglsModel <- gls(MetElev ~ log(Mass_g) + diet+ Nocturnal, correlation = corMartins(1, phy = MammTree.l), data = mamm.l, method = "ML")
+
 summary(pglsModel)
 #------------
 #Fit lambda simultaneous
@@ -668,7 +672,7 @@ par(mfrow=c(1,2), mar=c(4,4,2,0), oma=c(0,0,0,0), bty="l", lty="solid", cex=1.6,
 #MIN
 plot(mammals$Tmedian.min, mammals$T5q.min, type="p", xlab="Tmin median (°C)", ylab="Tmin metric (°C)")
 points(mammals$Tmedian.min, mammals$Tmin, type="p", col="blue")
-points(mammals$median.min, mammals$T10q.min, type="p", col="red")
+points(mammals$Tmedian.min, mammals$T10q.min, type="p", col="red")
 points(mammals$Tmedian.min, mammals$T5q.min, type="p")
 
 points(birds$Tmedian.min, birds$Tmin, type="p", col="blue", pch="*")
@@ -736,8 +740,8 @@ MEmed= rep(NA,1000)
 MEmean = rep(NA,1000)
 
 for(i in 1:1000){
-  #phy1=phy[phy$Taxa=="Mammal",]
-  phy1=phy[phy$Taxa=="Bird",]
+  phy1=phy[phy$Taxa=="Mammal",]
+  #phy1=phy[phy$Taxa=="Bird",]
   Trand= sample(phy1$Tmedian.min)
   NBMR= abs(phy$Tlc- Trand)*phy1$Cmin +phy1$BMR_mlO2_h
   MErand<- NBMR / phy1$BMR_mlO2_h

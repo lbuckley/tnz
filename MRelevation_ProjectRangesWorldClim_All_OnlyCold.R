@@ -52,7 +52,8 @@ plot(clim.fmax-clim.pmax)
 #-----------------------------------------
 #Load physiological data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRexpansibility_Buckleyetal.csv")
+#phy=read.csv("MRexpansibility_Buckleyetal.csv")
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #Calculate ambient prediction
 #Calculate MR elevation
