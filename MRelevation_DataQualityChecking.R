@@ -11,7 +11,7 @@ phy= read.csv("MRelevation_all_noUCTdrop.csv")
 #setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
 #qual=read.csv("TNZ_DataQuality.csv")
 setwd(paste(mydir,"MRelevation\\Data\\DataChecking\\", sep=""))
-qual=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv")
+qual=read.csv("MRexpansibility_Buckleyetal_wQual_1Mar2017.csv")
 
 #load geographic data
 geo=read.csv("TNZ_GeoData.csv")

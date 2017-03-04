@@ -6,12 +6,12 @@
 #
 #########################################
 #pick model
-mod="HD"
-#mod="CC"
+#mod="HD"
+mod="CC"
 
 #pick taxa
-#tax="Bird"
-tax="Mammal"
+tax="Bird"
+#tax="Mammal"
 
 library(dismo)
 library(raster)
@@ -146,9 +146,15 @@ speciesnames.rds<- gsub("\\.rds", "", speciesfiles.rds)
 for(spec in 1:nrow(phy) ){
 
   #LOAD SHAPEFILE AND EXTRACT EXT
-  #shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep=""))
-  if(tax=="Bird") shape= readRDS(paste(phy[spec,"ShapeName"],".rds",sep=""))
-  if(tax=="Mammal") shape= readRDS(paste(phy[spec,"Spec.syn"],".rds",sep=""))
+  if(tax=="Bird") {
+    if( !phy[spec,"ShapeName"] %in% speciesnames.rds){shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep="")) }
+    if( phy[spec,"ShapeName"] %in% speciesnames.rds) shape= readRDS(paste(phy[spec,"ShapeName"],".rds",sep=""))
+  } #check bird
+   
+   if(tax=="Mammal") {
+     if( !phy[spec,"Spec.syn"] %in% speciesnames.rds){shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"Spec.syn"],".rds",sep="")) }
+     if( phy[spec,"Spec.syn"] %in% speciesnames.rds) shape= readRDS(paste(phy[spec,"Spec.syn"],".rds",sep=""))
+   } #check mammal   
   
   extent2= extent(shape)
   
