@@ -153,12 +153,20 @@ phy[order(phy$MetElev,decreasing=TRUE)[1:10],]
 MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird")])
 MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal")])
 
+#restrict to high quality data
+#MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird" &phy$active=="rest" &phy$feeding=="postabsorptive"&phy$capture_quality=="trapped")])
+#MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal"&phy$active=="rest" &phy$feeding=="postabsorptive"&phy$capture_quality=="trapped")])
+
+#restrict to trapped
+MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird" &phy$capture_quality=="trapped")])
+MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal"&phy$capture_quality=="trapped")])
+
 #numbers of species
 length(MetElevs.b)
 length(MetElevs.m)
 
 #calcualte density
-db= density(MetElevs.b,n=50)
+db= density(MetElevs.b,50)
 dm= density(MetElevs.m)
 
 #find peak of density distribution
@@ -167,6 +175,7 @@ dm= density(MetElevs.m)
 #peak.b=mean(db$x[order(db$y, decreasing=TRUE)][1:2])
 #manually pick out 2 peaks in db
 peak.b= (2.067 + 3.3727)/2
+# (2.01 + 3.20)/2 #trapped
 
 peak.m=dm$x[which.max(dm$y)] 
 
@@ -817,7 +826,7 @@ phy1= phy[which(!is.na(phy$MetElev)),]
 phy.b= phy1[which(phy1$Taxa=="Bird"),]
 phy.m=  phy1[which(phy1$Taxa=="Mammal"),]
 
-phy.check= phy.m
+phy.check= phy.b
 summary(as.factor(phy.check$active))
 summary(as.factor(phy.check$fasted))
 summary(as.factor(phy.check$capture_quality))
@@ -829,7 +838,7 @@ summary(phy.check$dist.center)
 summary(phy.check$check)
 
 #check effects of quality
-mod1= lm(phy.check$MetElev~ as.factor(phy.check$active) + as.factor(phy.check$fasted) + as.factor(phy.check$capture_quality) + as.factor(phy.check$feeding) + as.factor(phy.check$activity) )
+mod1= lm(phy.check$MetElev~ as.factor(phy.check$active) + as.factor(phy.check$feeding) + as.factor(phy.check$capture_quality) )
 
 mod1= lm(phy.check$MetElev~ phy.check$dist.cold.perrange )
 mod1= lm(phy.check$MetElev~ phy.check$dist.cold )
@@ -839,3 +848,16 @@ phy.check$capture_quality[which(phy.check$capture_quality=="" | phy.check$captur
 
 mod1= lm(phy.check$MetElev~ phy.check$capture_quality )
 summary(mod1)
+
+#TRAIT MODELS
+phy.b= phy1[which(phy1$Taxa=="Bird" &phy1$capture_quality=="trapped"),]
+phy.m=  phy1[which(phy1$Taxa=="Mammal" &phy1$capture_quality=="trapped"),]
+phy.check= phy.b
+
+#mammal
+mod1= lm(phy.check$MetElev~ log(phy.check$Mass_g) + phy.check$diet + phy.check$Nocturnal + phy.check$torpor)
+#bird no torpor
+mod1= lm(phy.check$MetElev~ log(phy.check$Mass_g) + phy.check$diet + phy.check$Nocturnal)
+
+summary(mod1)
+AIC(mod1)

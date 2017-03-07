@@ -1,5 +1,6 @@
 #Plot range shifts
 
+library(grid)
 library(ggplot2)
 #for mapping
 library(ggmap)
@@ -9,8 +10,8 @@ library(colorRamps)     # for matlab.like(...)
 #--------------------
 #pick model
 
-#mod="CC"
-mod="HD"
+mod="CC"
+#mod="HD"
 
 #--------------------
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
@@ -33,7 +34,8 @@ rlim=rbind(rlim.b.cc[,1:16], rlim.b.hd[,1:16], rlim.m.cc[,1:16], rlim.m.hd[,1:16
 
 #match to phy
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRexpansibility_Buckleyetal.csv")
+#phy=read.csv("MRexpansibility_Buckleyetal.csv")
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 
 #subset to model
 rlim_mod= rlim[rlim$proj==mod,]
@@ -239,7 +241,7 @@ data(wrld_simpl)
 
 #-------------
 #pick model
-mod="HD"
+#mod="HD"
 #mod="CC"
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
@@ -266,7 +268,8 @@ plot(clim.fmax-clim.pmax)
 #-----------------------------------------
 #Load physiological data
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
-phy=read.csv("MRelevation_all.csv")
+#phy=read.csv("MRelevation_all.csv")
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
 #phy=na.omit(phy[,1:30])
 
 #Calculate ambient prediction
@@ -325,7 +328,17 @@ par(mfrow=c(2,2), cex=1.1, mar=c(3, 3, 1, 0.5), oma=c(0,0,0,0), lwd=1, bty="o", 
 setwd(paste(mydir,"Data\\Shapefiles\\TERRESTRIAL_MAMMALS\\", sep=""))
 
 #speci= rev(which(phy$Species %in% c("Spermophilus beecheyi","Microtus montanus","Myodes gapperi") ))
-speci= rev(which(phy$Species %in% c("Tamiasciurus hudsonicus", "Neotoma lepida","Peromyscus californicus" ) ))
+#speci= rev(which(phy$Species %in% c("Tamiasciurus hudsonicus", "Neotoma lepida","Peromyscus californicus" ) ))
+speci= rev(which(phy$Species %in% c("Marmota monax", "Microtus montanus","Peromyscus eremicus" ) ))
+
+#chaetodipus intermedius, Rock pocket mouse 
+#Didelphis virginiana, Virginia Opossum
+#Dipodomys merriami, Merriam's kangaroo rat 
+#Marmota monax, groundhog *
+# Peromyscus eremicus, cactus mouse *
+#Lepus californicus
+#Microtus montanus, Montane vole *
+
 #Tamiasciurus hudsonicus, Red Squirrel 
 #Neotoma lepida, desert woodrat
 #Peromyscus californicus, California Mouse
@@ -334,7 +347,15 @@ speci= rev(which(phy$Species %in% c("Tamiasciurus hudsonicus", "Neotoma lepida",
 for(spec in speci ){
   
   #LOAD SHAPEFILE AND EXTRACT EXT
-  shape= readRDS(paste(phy[spec,"Spec.syn"],".rds",sep=""))
+  if(tax=="Bird") {
+    if( !phy[spec,"ShapeName"] %in% speciesnames.rds){shape= shapefile(paste(phy[spec,"ShapeName"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"ShapeName"],".rds",sep="")) }
+    if( phy[spec,"ShapeName"] %in% speciesnames.rds) shape= readRDS(paste(phy[spec,"ShapeName"],".rds",sep=""))
+  } #check bird
+  
+  if(tax=="Mammal") {
+    if( !phy[spec,"Spec.syn"] %in% speciesnames.rds){shape= shapefile(paste(phy[spec,"Spec.syn"],".shp",sep="")); saveRDS(shape, paste(phy[spec,"Spec.syn"],".rds",sep="")) }
+    if( phy[spec,"Spec.syn"] %in% speciesnames.rds) shape= readRDS(paste(phy[spec,"Spec.syn"],".rds",sep=""))
+  } #check mammal   
   
   extent2= extent(shape)
   
@@ -344,16 +365,11 @@ for(spec in speci ){
     if(clim==2) clim.pmin1= clim.fmin; clim.pmax1= clim.fmax
     
     ## CURRENT CLIMATE
-    #Subset to above Tmin and below Tmax
-    #account for species with only one constraint
-    if(phy$predC[spec]==1) clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
-    if(phy$predW[spec]==1) clim.pmax1[clim.pmax1> phy$Tamb_upSS[spec]]<- NA
+    #Subset to above Tmin
+    clim.pmin1[clim.pmin1< phy$Tamb_lowSS[spec]]<- NA
     
     #specify prediction
-    if(phy$predC[spec]==1 & phy$predW[spec]==1) clim.spec= clim.pmin1 + clim.pmax1
-    if(phy$predC[spec]==1 & phy$predW[spec]==0) clim.spec= clim.pmin1
-    if(phy$predC[spec]==0 & phy$predW[spec]==1) clim.spec= clim.pmax1
-    
+    clim.spec= clim.pmin1
     clim.spec= trim(clim.spec)
     
     #crop to lon extent
@@ -390,23 +406,60 @@ for(spec in speci ){
     
     clim.spec.crop[!(sc %in% df1$clump_id)] <- NA
     
-    if(!is.na(sum(as.matrix(clim.spec.crop))) )clim.spec.crop= trim(clim.spec.crop)
+    if(!is.na(sum(as.matrix(clim.spec.crop))) ) clim.spec.crop= trim(clim.spec.crop)
     
-    if(clim==1) range.p= clim.spec.crop
-    if(clim==2) range.f= clim.spec.crop
+    #-----------------------------
+    
+    range.s= extent(clim.spec.crop)
+    
+    #Control for constraints
+    lat.range= c(range.s@ymin, range.s@ymax) 
+    
+    if(phy$hemi[spec]=="N")lat.range[1]=NA
+    if(phy$hemi[spec]=="S")lat.range[2]=NA
+    
+    #find range
+    if(clim==1) rlim[spec,1:2]= lat.range #past lat range
+    if(clim==2) rlim[spec,3:4]= lat.range #future lat range
+    
+    #find lat range by column
+    pred1=clim.spec.crop
+    pred1[!is.na(pred1)] <- 1
+    
+    #record area
+    if(clim==1) range.p= pred1
+    if(clim==2) range.f= pred1
+    
+    yr= raster(clim.spec.crop)
+    yr <- init(yr, 'y')
+    yr= yr*pred1
+    yr= as.matrix(yr)
+    
+    ymax=  median(apply(yr, MARGIN=2, max, na.rm=TRUE),na.rm=TRUE)
+    ymin=  median(apply(yr, MARGIN=2, min, na.rm=TRUE),na.rm=TRUE)
+    
+    #Control for constraints
+    if(phy$hemi[spec]=="N") ymin=NA
+    if(phy$hemi[spec]=="S") ymax=NA
+    
+    if(clim==1) rlim[spec,10:11]= c(ymin,ymax) # past range medians
+    if(clim==2) rlim[spec,12:13]= c(ymin,ymax) # future range medians
     
   } #end clim loop
- 
-  #-----------------------------
+  #----------------
+  #plot
+  
   #RANGE MAPS
   xlims=c(-130,-75)
   ylims=c(25,80)
   
   image(range.p, col="blue", main=phy[spec,"Species"], xlim=xlims, ylim=ylims, ylab="Latitude (°)", xlab="Longitude (°)", cex=1.2, cex.lab=1.2)
   plot(wrld_simpl, add=TRUE, border="gray")
+  #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], xlim=c(cext@xmin,cext@xmax), ylim=c(cext@ymin,cext@ymax))
+  #plot(range.p, col="blue", legend=FALSE, main=phy[spec,"Species"], ext=cext)
   plot(range.f, col=rainbow(1, alpha=0.5),add=TRUE, legend=FALSE)
   plot(shape, add=TRUE)
- 
+  
   if(spec==169) legend("topleft", legend= c("1960-1990","2070") , fill=c("blue", rainbow(1, alpha=0.5)), bty="n")
   
 } #end species loop  
