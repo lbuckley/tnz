@@ -24,10 +24,10 @@ count=function(x) length(na.omit(x))
 setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 #phy=read.csv("MRexpansibility_Buckleyetal.csv")
 #phy=read.csv("MRexpansibility_Buckleyetal_wQual_28Feb2017.csv") #read data including quality
-phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop.csv")
+phy=read.csv("MRexpansibility_Buckleyetal_wQual_noUCTdrop_FIN.csv")
 
 #drop two omit cases
-phy= phy[-which(phy$omit=="y"),]
+#phy= phy[-which(phy$omit=="y"),]
 
 #-----------------------
 #Calculate conductance (CMIN)
@@ -158,8 +158,8 @@ MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal")])
 #MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal"&phy$active=="rest" &phy$feeding=="postabsorptive"&phy$capture_quality=="trapped")])
 
 #restrict to trapped
-MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird" &phy$capture_quality=="trapped")])
-MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal"&phy$capture_quality=="trapped")])
+#MetElevs.b= na.omit(phy$MetElev[which(phy$Taxa=="Bird" &phy$capture_quality=="trapped")])
+#MetElevs.m= na.omit(phy$MetElev[which(phy$Taxa=="Mammal"&phy$capture_quality=="trapped")])
 
 #numbers of species
 length(MetElevs.b)
@@ -819,6 +819,16 @@ sd(na.omit(phy1$MRfact_max[which(phy1$MRfact_max>0)]))
 #=================================================
 #CHECK LCT QUALITY
 
+#add distance metrics
+
+#Calculate distance from measurement to range edge
+cold= ifelse( abs(phy$UpperLat)> abs(phy$LowerLat), phy$UpperLat, phy$LowerLat)
+
+phy$dist.cold= abs(cold-phy$CollectionLat)
+phy$dist.cold.perrange= phy$dist.cold/ (phy$UpperLat - phy$LowerLat  )
+
+#--------------------------------
+
 #Distribution of metabolic expanisbility at cold range boundary
 #Plot density of metabolic expansibility
 phy1= phy[which(!is.na(phy$MetElev)),]
@@ -827,18 +837,16 @@ phy.b= phy1[which(phy1$Taxa=="Bird"),]
 phy.m=  phy1[which(phy1$Taxa=="Mammal"),]
 
 phy.check= phy.b
-summary(as.factor(phy.check$active))
-summary(as.factor(phy.check$fasted))
 summary(as.factor(phy.check$capture_quality))
-summary(as.factor(phy.check$feeding))
-summary(as.factor(phy.check$activity))
+summary(as.factor(phy.check$PostabsorptiveState))
+summary(as.factor(phy.check$Phase))
 summary(phy.check$dist.cold)
 summary(phy.check$dist.cold.perrange)
-summary(phy.check$dist.center)
-summary(phy.check$check)
+#summary(phy.check$dist.center)
+#summary(phy.check$check)
 
 #check effects of quality
-mod1= lm(phy.check$MetElev~ as.factor(phy.check$active) + as.factor(phy.check$feeding) + as.factor(phy.check$capture_quality) )
+mod1= lm(phy.check$MetElev~ as.factor(phy.check$Phase) + as.factor(phy.check$PostabsorptiveState) + as.factor(phy.check$capture_quality) )
 
 mod1= lm(phy.check$MetElev~ phy.check$dist.cold.perrange )
 mod1= lm(phy.check$MetElev~ phy.check$dist.cold )
@@ -852,7 +860,7 @@ summary(mod1)
 #TRAIT MODELS
 phy.b= phy1[which(phy1$Taxa=="Bird" &phy1$capture_quality=="trapped"),]
 phy.m=  phy1[which(phy1$Taxa=="Mammal" &phy1$capture_quality=="trapped"),]
-phy.check= phy.b
+phy.check= phy.m
 
 #mammal
 mod1= lm(phy.check$MetElev~ log(phy.check$Mass_g) + phy.check$diet + phy.check$Nocturnal + phy.check$torpor)
