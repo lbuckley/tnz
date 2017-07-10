@@ -6,12 +6,12 @@
 #
 #########################################
 #pick model
-#mod="HD"
-mod="CC"
+mod="HD"
+#mod="CC"
 
 #pick taxa
-tax="Bird"
-#tax="Mammal"
+#tax="Bird"
+tax="Mammal"
 
 library(dismo)
 library(raster)
@@ -332,3 +332,15 @@ setwd(paste(mydir,"MRelevation\\Out\\", sep=""))
 rlim.out= cbind(phy$Species, rlim)
 write.csv(rlim.out, paste(tax,"Rlim_",mod,".csv", sep=""))
 #=======================
+
+#ESTIMATE ELEVATION FROM LAT AND LON
+
+dat.e= phy[,c("CollectionLon","CollectionLat")] 
+dat.e= na.omit(dat.e)
+
+#library(elevatr) #COULD GET TO WORK
+
+#library(rgbif)
+#delevs=elevation(latitude = dat.e$CollectionLat, longitude = dat.e$CollectionLon, key="AIzaSyCmG4aYgcDcEohc6hyblJO-r09ZBJ3YiAY")
+summary(delevs)
+

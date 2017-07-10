@@ -11,6 +11,7 @@ library(phytools)
 library(ape)
 library(grid)
 library(MuMIn) #for model averaging
+library(moments) #assess skew
 
 mydir= "C:\\Users\\Buckley\\Google Drive\\Buckley\\Work\\TNZ\\"
 
@@ -186,6 +187,37 @@ median(MetElevs.m); mean(MetElevs.m);sd(MetElevs.m)
 se=function(x) sd(x)/sqrt(sum(!is.na(x)))
 se(MetElevs.m)
 se(MetElevs.b)
+
+t.test(MetElevs.m)
+t.test(MetElevs.b)
+
+#------------------
+#ASSESS SKEW
+skewness(MetElevs.b, na.rm = TRUE)
+skewness(MetElevs.m, na.rm = TRUE)
+
+#test of skewness
+agostino.test(MetElevs.b, alternative = c("less"))
+agostino.test(MetElevs.m, alternative = c("less"))
+
+#assess and test kurtosis
+#ANSCOMBE
+kurtosis(MetElevs.b, na.rm = TRUE)
+kurtosis(MetElevs.m, na.rm = TRUE)
+
+anscombe.test(MetElevs.b, alternative = c("two.sided"))
+anscombe.test(MetElevs.m, alternative = c("two.sided"))
+
+#GEARY
+geary(MetElevs.b, na.rm = TRUE)
+geary(MetElevs.m, na.rm = TRUE)
+bonett.test(MetElevs.b, alternative = c("less"))
+bonett.test(MetElevs.m, alternative = c("less"))
+#mammals greater kurtosos
+
+#TEST BIRD UNIMODALITY
+library(diptest)
+dip.test(MetElevs.b, simulate.p.value = TRUE, B = 2000)
 
 #-----------
 #Distribution of metabolic expanisbility at warm range boundary
