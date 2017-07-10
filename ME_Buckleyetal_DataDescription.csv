@@ -1,0 +1,40 @@
+Name,Description,Source
+Species,species,
+Order,order,
+Spec.syn,species name synonym,
+gen_spec,Genus_species,
+Taxa,Bird or Mammal,
+Mass_g,mass in g,See source field
+Tb,body temperature in °C,See source field
+Tlc,lower critical temperature in °C,See source field
+Tuc,upper critical temperature in °C,See source field
+BMR_mlO2_h,basal metabolic rate in ml 02 h-1,"From Fristoe et al. 2015 PNAS, McNab 2008 and 2009 Comp. Biochem. Physiol. A. Mol. Integr. Physiol."
+CMIN_mlO2_hC,conductance in ml 02 h-1 °C-1,Calculated as C=|(0-BMR)/(Tb-Tlc)|
+BMR_W,basal metabolic rate in watts,"From Fristoe et al. 2015 PNAS, McNab 2008 and 2009 Comp. Biochem. Physiol. A. Mol. Integr. Physiol."
+Source,"Source of physiological data: Khaliqetal= Khaliq et al. 2014 Proc. R. Soc. B Biol. Sci. , ReikGeiser= Reik and Geiser 2013 Biol. Rev., Bozinovic= Bozinovic et al. 2014 Evol. Ecol. Res., Canterbury= Canterbury 2002 Ecology",
+diet,"Diet category: PlantSeed, Omnivore, Invertebrate, VertFishScav, FruitNect",From Wilman et al. 2014 Ecology
+Nocturnal,"1 for nocturnal activity, 0 for no nocturnal activity",From Wilman et al. 2014 Ecology
+torpor,"1 for use of torpor or hibernation, 0 for no use.",From McNab 2008 and 2009 Comp. Biochem. Physiol. A. Mol. Integr. Physiol.
+Nconstrained,"1 if northern range limit is constrained by island or continental boundary, 0 otherwise",Derived using IUCN and BirdLife range maps
+Sconstrained,"1 if southern range limit is constrained by island or continental boundary, 0 otherwise",Derived using IUCN and BirdLife range maps
+Tmin,minimum range boundary temperature in °C,Derived using WoldClim BIO6
+Tmedian.min,median of minimum temperature across range boundary in °C,Derived using WoldClim BIO6
+T5q.min,5th quantile of minimum temperature across range boundary in °C,Derived using WoldClim BIO6
+T10q.min,10th quantile of minimum temperature across range boundary in °C,Derived using WoldClim BIO6
+Tsd.min,standard deviation of minimum temperature across range boundary in °C,Derived using WoldClim BIO6
+Tmad.min,median absolute deviation of minimum temperature across range boundary in °C,Derived using WoldClim BIO6
+Tmax,maximum range boundary temperature in °C,Derived using WoldClim BIO5
+Tmedian.max,median of maximum temperature across range boundary in °C,Derived using WoldClim BIO5
+T5q.max,5th quantile of maximum temperature across range boundary in °C,Derived using WoldClim BIO5
+T10q.max,10th quantile of maximum temperature across range boundary in °C,Derived using WoldClim BIO5
+Tsd.max,standard deviation of maximum temperature across range boundary in °C,Derived using WoldClim BIO5
+Tmad.max,median absolute deviation of maximum temperature across range boundary in °C,Derived using WoldClim BIO5
+UpperLat,northern extent of species distribution (°),Derived using IUCN and BirdLife range maps
+LowerLat,southern extent of species distribution (°),Derived using IUCN and BirdLife range maps
+ShapeName,IUCN range map shapefile name,Derived using IUCN and BirdLife range maps
+Area,area of species range in pixels,Derived using IUCN and BirdLife range maps
+CollectionLon,Longitude at which animals were collected (°),Source cited in data compilations indicated in Source column 
+CollectionLat,Latitude at which animals were collected (°),Source cited in data compilations indicated in Source column 
+Phase,"Phase during which Tlc measurements were taken,  resting or active",Source cited in data compilations indicated in Source column 
+capture_quality,"Indicates origin of measured animals, trapped or captive",Source cited in data compilations indicated in Source column 
+PostabsorptiveState,"State when Tlc measurements were taken,  postabsorptive or notpostabsorptive",Source cited in data compilations indicated in Source column 
